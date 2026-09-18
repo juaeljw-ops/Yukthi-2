@@ -158,16 +158,17 @@ def run_pipeline() -> dict:
     analyzed_df[export_cols].to_csv(csv_path, index=False)
     print(f"  -> Exported CSV: {csv_path.name} ({len(analyzed_df):,} rows)")
 
-    # 2. Export Chiller Time-series CSV (Matching Person 2's dashboard schema)
+    # 2. Export Chiller Time-series CSV (Preserving official contract columns & adapters)
     ts_df = analyzed_df.copy()
     ts_df["cooling_water_temp"] = ts_df["Cooling Water Temperature (C)"]
     ts_df["chilled_water_flow"] = ts_df["Chilled Water Rate (L/sec)"]
     ts_df["building_load"] = ts_df["Building Load (RT)"]
     ts_df["outside_temp"] = ts_df["Outside Temperature (F)"]
     ts_df["trend"] = "STABLE"
-    # Assign rolling trend where persistent
+    
+    # Assign rolling trend grouped strictly by equipment to prevent cross-equipment boundary leakage
     if "deviation_pct" in ts_df.columns:
-        rolling_diff = ts_df["deviation_pct"].diff()
+        rolling_diff = ts_df.groupby(EQUIPMENT_COL)["deviation_pct"].diff()
         ts_df.loc[rolling_diff > 1.0, "trend"] = "INCREASING"
         ts_df.loc[rolling_diff < -1.0, "trend"] = "DECREASING"
 
@@ -179,6 +180,7 @@ def run_pipeline() -> dict:
         "deviation_pct",
         "residual",
         "anomaly_score",
+        "is_abnormal",
         "severity",
         "persistent",
         "consecutive_abnormal_readings",
@@ -187,6 +189,14 @@ def run_pipeline() -> dict:
         "chilled_water_flow",
         "building_load",
         "outside_temp",
+        "Chilled Water Rate (L/sec)",
+        "Cooling Water Temperature (C)",
+        "Building Load (RT)",
+        "Outside Temperature (F)",
+        "Dew Point (F)",
+        "Humidity (%)",
+        "Wind Speed (mph)",
+        "Pressure (in)",
     ]
     timeseries_path = OUTPUT_DIR / "chiller_timeseries.csv"
     ts_df[ts_cols].to_csv(timeseries_path, index=False)

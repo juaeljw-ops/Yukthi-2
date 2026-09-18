@@ -14,9 +14,19 @@ CORE DESIGN:
 """
 
 from typing import Any, Dict, List, Optional, Tuple
+import math
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
+try:
+    from scipy.stats import norm
+    def normal_cdf(z):
+        return norm.cdf(z)
+except ImportError:
+    def normal_cdf(z):
+        erf_vec = np.vectorize(math.erf)
+        return 0.5 * (1.0 + erf_vec(np.array(z, dtype=float) / np.sqrt(2.0)))
+
+
 
 from ml.config import (
     ANOMALY_Z_THRESHOLD,
@@ -67,7 +77,7 @@ def compute_residuals_and_scores(
 
         # Continuous anomaly score in [0, 1] using standard normal cumulative distribution
         # High positive residuals (unexpected excess consumption) yield scores close to 1.0
-        scores = norm.cdf(z_scores)
+        scores = normal_cdf(z_scores)
         df_out.loc[mask, "anomaly_score"] = np.round(scores, 4)
 
         # Primary anomaly detection: statistical deviation exceeding threshold

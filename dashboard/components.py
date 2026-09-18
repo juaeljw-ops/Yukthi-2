@@ -403,37 +403,205 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
 
 
 def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
-    st.markdown(f"### 🎬 ANOMALY REPLAY — {chiller_id}")
-    st.caption("Chronological timeline replay using real timestamps from `development_dataset.csv`")
+    st.markdown(f"### 🎬 ANOMALY REPLAY & EVENT CLASSIFIER — `{chiller_id}`")
+    st.caption("Chronological time-series replay with real-time operational classification (🔴 Anomaly / 🟢 Normal)")
 
     if df_chiller.empty:
         st.warning("No time-series data available for replay.")
         return
 
+    energy_col = "Chiller Energy Consumption (kWh)"
     timestamps = list(df_chiller["timestamp"])
-    
-    selected_idx = st.slider(
-        "⏱️ Drag timeline slider to inspect timestamp:",
-        min_value=0,
-        max_value=len(timestamps) - 1,
-        value=min(100, len(timestamps) - 1),
-        format="Reading %d"
-    )
+    total_len = len(timestamps)
+
+    # Determine anomaly masks
+    has_severity = "severity" in df_chiller.columns
+    if has_severity:
+        is_anomaly_mask = (df_chiller["severity"] != "NORMAL") | (df_chiller.get("is_abnormal", False) == True)
+    else:
+        is_anomaly_mask = pd.Series([False] * total_len)
+
+    anomaly_indices = df_chiller.index[is_anomaly_mask].tolist()
+    total_anomalies = len(anomaly_indices)
+
+    # Quick Jump Controls for presentation demo
+    c_nav1, c_nav2 = st.columns([3, 1])
+    with c_nav2:
+        jump_mode = st.selectbox(
+            "🧭 Jump to:",
+            options=["Scrub All Timestamps", "Anomalous Events Only"] if total_anomalies > 0 else ["Scrub All Timestamps"],
+            index=0
+        )
+
+    if jump_mode == "Anomalous Events Only" and total_anomalies > 0:
+        event_labels = [
+            f"Reading #{idx} ({df_chiller.loc[idx, 'timestamp']} - {df_chiller.loc[idx, 'severity']})"
+            for idx in anomaly_indices[:50]
+        ]
+        selected_event_label = st.selectbox("Select Anomaly Instance:", options=event_labels, index=0)
+        selected_idx = int(selected_event_label.split(" ")[0].replace("Reading", "").replace("#", ""))
+    else:
+        default_val = anomaly_indices[0] if anomaly_indices else min(100, total_len - 1)
+        selected_idx = st.slider(
+            "⏱️ Drag timeline slider to scrub through readings:",
+            min_value=0,
+            max_value=total_len - 1,
+            value=default_val,
+            format="Reading %d"
+        )
 
     row = df_chiller.iloc[selected_idx]
-    energy_col = "Chiller Energy Consumption (kWh)"
+    current_status = str(row.get("severity", "NORMAL")).upper()
+    is_abnormal = bool(row.get("is_abnormal", current_status != "NORMAL"))
+    dev_pct = float(row.get("deviation_pct", 0.0)) if pd.notna(row.get("deviation_pct")) else 0.0
+    actual_e = float(row.get(energy_col, 0.0))
+    expected_e = float(row.get("expected_energy", actual_e)) if pd.notna(row.get("expected_energy")) else actual_e
+    z_score = float(row.get("residual_zscore", 0.0)) if pd.notna(row.get("residual_zscore")) else 0.0
+    consec = int(row.get("consecutive_abnormal_readings", 0)) if pd.notna(row.get("consecutive_abnormal_readings")) else 0
+    event_id = row.get("event_id", None)
+
+    # =========================================================================
+    # 🔴 / 🟢 OPERATIONAL CLASSIFICATION BANNER
+    # =========================================================================
+    if is_abnormal or current_status in ["WATCH", "INVESTIGATE", "PRIORITY"]:
+        # HIGHLIGHTED IN RED (ANOMALY)
+        border_color = "#EF4444"
+        bg_color = "rgba(239, 68, 68, 0.12)"
+        badge_bg = "#EF4444"
+        badge_text = f"🚨 ANOMALOUS EVENT — {current_status}"
+        desc_text = (
+            f"Energy consumption is <strong>+{dev_pct:.1f}% higher than expected</strong> "
+            f"under the prevailing operating conditions. Statistical residual z-score is <strong>+{z_score:.2f}σ</strong> "
+            f"(threshold ≥ 2.5σ). Consecutive sequence: <strong>{consec} abnormal reading(s)</strong>."
+        )
+    else:
+        # HIGHLIGHTED IN GREEN (NORMAL)
+        border_color = "#10B981"
+        bg_color = "rgba(16, 185, 129, 0.12)"
+        badge_bg = "#10B981"
+        badge_text = "🟢 NORMAL OPERATING STATE — NOMINAL"
+        desc_text = (
+            f"Equipment behavior strictly conforms to learned thermodynamic baseline. "
+            f"Residual z-score is <strong>{z_score:+.2f}σ</strong> (within normal ±2.5σ statistical tolerance). "
+            f"Deviation: <strong>{dev_pct:+.1f}%</strong>."
+        )
 
     st.markdown(
         f"""
-        <div style="background: #0F172A; border: 1px solid #334155; border-radius: 12px; padding: 18px; margin-top: 16px;">
-            <h4 style="color:#38BDF8; margin:0 0 12px 0;">TIMESTAMP: {row['timestamp']}</h4>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 0.95rem;">
-                <div>Actual Energy: <strong style="color:#F8FAFC;">{row[energy_col]:.1f} kWh</strong></div>
-                <div>Cooling Water Temp: <strong style="color:#38BDF8;">{row.get('Cooling Water Temperature (C)', 0.0):.1f} °C</strong></div>
-                <div>Chilled Water Rate: <strong style="color:#10B981;">{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} L/s</strong></div>
-                <div>Building Load: <strong style="color:#F59E0B;">{row.get('Building Load (RT)', 0.0):.1f} RT</strong></div>
+        <div style="background: {bg_color}; border: 2px solid {border_color}; border-radius: 12px; padding: 20px; margin-top: 14px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="background: {badge_bg}; color: #FFFFFF; padding: 6px 16px; border-radius: 9999px; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.05em;">
+                        {badge_text}
+                    </span>
+                    {f'<span style="color: #94A3B8; font-size: 0.88rem; font-family: monospace;">ID: {event_id}</span>' if event_id else ''}
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC;">
+                    Reading #{selected_idx:,} &bull; {row['timestamp']}
+                </div>
+            </div>
+            <div style="margin-top: 12px; font-size: 0.98rem; color: #E2E8F0; line-height: 1.5;">
+                {desc_text}
+            </div>
+            <hr style="border-color: {border_color}; opacity: 0.3; margin: 14px 0;" />
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 0.92rem;">
+                <div>Actual Energy: <strong style="color: #F8FAFC; font-size: 1.15rem;">{actual_e:.1f} kWh</strong></div>
+                <div>Expected Baseline: <strong style="color: #38BDF8; font-size: 1.15rem;">{expected_e:.1f} kWh</strong></div>
+                <div>Deviation: <strong style="color: {border_color}; font-size: 1.15rem;">{dev_pct:+.1f}%</strong></div>
+                <div>Residual Z-Score: <strong style="color: {border_color}; font-size: 1.15rem;">{z_score:+.2f}σ</strong></div>
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    # =========================================================================
+    # 📈 TIMELINE VISUALIZATION (RED FOR ANOMALY, GREEN FOR NORMAL)
+    # =========================================================================
+    st.markdown("#### 📊 Anomaly Timeline Overview")
+    st.caption("Points in 🔴 red indicate classified anomalies; 🟢 green points indicate normal operating periods. Orange line marks current scrubbed position.")
+
+    # Downsample for responsive Plotly rendering if dataset is large
+    step = max(1, len(df_chiller) // 1000)
+    plot_df = df_chiller.iloc[::step].copy()
+
+    fig = go.Figure()
+
+    # Normal points trace (Green)
+    normal_sub = plot_df[~plot_df["timestamp"].isin(df_chiller.loc[is_anomaly_mask, "timestamp"])]
+    fig.add_trace(
+        go.Scatter(
+            x=normal_sub["timestamp"],
+            y=normal_sub[energy_col],
+            mode="lines+markers",
+            name="Normal (Nominal)",
+            line=dict(color="#10B981", width=1.5),
+            marker=dict(size=4, color="#10B981"),
+            hovertemplate="<b>Normal</b><br>Time: %{x}<br>Energy: %{y:.1f} kWh<extra></extra>"
+        )
+    )
+
+    # Anomaly points trace (Red)
+    anomaly_sub = plot_df[plot_df["timestamp"].isin(df_chiller.loc[is_anomaly_mask, "timestamp"])]
+    if not anomaly_sub.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=anomaly_sub["timestamp"],
+                y=anomaly_sub[energy_col],
+                mode="markers",
+                name="Anomaly (Deviant)",
+                marker=dict(size=7, color="#EF4444", symbol="circle"),
+                hovertemplate="<b>🚨 ANOMALY</b><br>Time: %{x}<br>Energy: %{y:.1f} kWh<extra></extra>"
+            )
+        )
+
+    # Current scrubbed timestamp vertical indicator
+    current_time_str = str(row["timestamp"])
+    fig.add_vline(
+        x=current_time_str,
+        line_width=2.5,
+        line_dash="solid",
+        line_color="#F59E0B",
+        annotation_text="📍 Selected Reading",
+        annotation_position="top left",
+        annotation_font_color="#F59E0B"
+    )
+
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#1E293B",
+        plot_bgcolor="#0F172A",
+        margin=dict(l=40, r=40, t=30, b=40),
+        height=320,
+        hovermode="closest",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis=dict(title="Timestamp", gridcolor="#334155", showgrid=True),
+        yaxis=dict(title="Energy Consumption (kWh)", gridcolor="#334155", showgrid=True)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # =========================================================================
+    # 🌡️ SENSOR CONTEXT AT CURRENT TIMESTAMP
+    # =========================================================================
+    st.markdown("#### 🔬 Operating Conditions at Selected Timestamp")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.metric("Cooling Water Temp", f"{row.get('Cooling Water Temperature (C)', 0.0):.1f} °C")
+    with c2:
+        st.metric("Chilled Water Rate", f"{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} L/s")
+    with c3:
+        st.metric("Building Load", f"{row.get('Building Load (RT)', 0.0):.1f} RT")
+    with c4:
+        st.metric("Outside Temp", f"{row.get('Outside Temperature (F)', 0.0):.1f} °F")
+
+    c5, c6, c7, c8 = st.columns(4)
+    with c5:
+        st.metric("Humidity", f"{row.get('Humidity (%)', 0.0):.1f} %")
+    with c6:
+        st.metric("Dew Point", f"{row.get('Dew Point (F)', 0.0):.1f} °F")
+    with c7:
+        st.metric("Wind Speed", f"{row.get('Wind Speed (mph)', 0.0):.1f} mph")
+    with c8:
+        st.metric("Atmospheric Pressure", f"{row.get('Pressure (in)', 0.0):.2f} in")
+

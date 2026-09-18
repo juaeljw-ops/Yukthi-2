@@ -1,6 +1,6 @@
 [
   {
-    "equipment": "Chiller_01",
+    "equipment": "CHILLER-01",
     "status": "NORMAL",
     "health_index": 96,
     "current_deviation_pct": 3.2,
@@ -10,7 +10,7 @@
     "active_investigations": 0
   },
   {
-    "equipment": "Chiller_02",
+    "equipment": "CHILLER-02",
     "status": "INVESTIGATE",
     "health_index": 54,
     "current_deviation_pct": 25.8,
@@ -20,7 +20,7 @@
     "active_investigations": 1
   },
   {
-    "equipment": "Chiller_03",
+    "equipment": "CHILLER-03",
     "status": "WATCH",
     "health_index": 78,
     "current_deviation_pct": 11.4,

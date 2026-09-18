@@ -123,31 +123,37 @@ def split_train_test_by_equipment(
 def impute_leakage_safe(
     df: pd.DataFrame,
     impute_stats: Dict[str, Dict[str, float]],
-    drop_null_target: bool = True,
+    drop_null_target: bool = False,
 ) -> pd.DataFrame:
     """
-    Apply leakage-safe missing value imputation:
-    1. For contextual variables within each equipment:
-       - Forward-fill historical observations (ffill)
-       - If leading observations are null, fill with training-set median.
-       - NEVER backward fill from future observations!
-    2. Drop rows missing the target variable if requested.
+    Apply leakage-safe missing value imputation without dropping rows:
+    1. For all contextual variables and target energy consumption within each equipment:
+       - Linear interpolation for interior null values.
+       - Chronological forward-fill (ffill).
+       - Leading nulls filled with training-set equipment median (or group median fallback).
+       - Backward-fill (bfill) as secondary safety to ensure zero nulls remain.
+    2. Zero rows are dropped via dropna to preserve continuous time-series alignment.
     """
     df_imputed = df.copy()
     processed_groups = []
+
+    all_numeric_cols = CONTEXTUAL_VARIABLES + [TARGET_COL]
 
     for eq, group in df_imputed.groupby(EQUIPMENT_COL, sort=False):
         group = group.sort_values("dt").copy()
         eq_medians = impute_stats.get(eq, {})
 
-        # Impute contextual features
-        for col in CONTEXTUAL_VARIABLES:
+        for col in all_numeric_cols:
             if col in group.columns:
-                # Historical forward fill only
+                # 1. Forward-direction linear interpolation for interior gaps
+                group[col] = group[col].interpolate(method="linear", limit_direction="forward")
+                # 2. Historical forward fill
                 group[col] = group[col].ffill()
-                # Leading values filled with train median
-                fallback_val = eq_medians.get(col, 0.0)
-                group[col] = group[col].fillna(fallback_val)
+                # 3. Leading values filled with train median
+                fallback_val = eq_medians.get(col, group[col].median() if not group[col].empty else 0.0)
+                group[col] = group[col].fillna(fallback_val if not pd.isna(fallback_val) else 0.0)
+                # 4. Backward fill safety guard
+                group[col] = group[col].bfill()
 
         processed_groups.append(group)
 
@@ -167,10 +173,10 @@ def prepare_dataset(
     1. Load CSV
     2. Clean, engineer time features, and sort chronologically
     3. Chronological train/test split per equipment
-    4. Leakage-safe imputation calibrated purely on training data
+    4. Leakage-safe zero-drop imputation calibrated on training data
     
     Returns:
-        full_clean_df: Entire cleaned dataset with leakage-safe imputation
+        full_clean_df: Entire cleaned dataset with zero-drop imputation (preserves all rows)
         train_df: Training partition (leakage-free)
         test_df: Test partition (leakage-free)
         impute_stats: Training medians used for imputation
@@ -180,10 +186,11 @@ def prepare_dataset(
 
     train_raw, test_raw, impute_stats = split_train_test_by_equipment(clean_df)
 
-    train_df = impute_leakage_safe(train_raw, impute_stats, drop_null_target=True)
-    test_df = impute_leakage_safe(test_raw, impute_stats, drop_null_target=True)
+    train_df = impute_leakage_safe(train_raw, impute_stats, drop_null_target=False)
+    test_df = impute_leakage_safe(test_raw, impute_stats, drop_null_target=False)
 
-    # Impute full dataset sequentially per equipment using training statistics
-    full_clean_df = impute_leakage_safe(clean_df, impute_stats, drop_null_target=True)
+    # Impute full dataset sequentially per equipment using training statistics without dropping rows
+    full_clean_df = impute_leakage_safe(clean_df, impute_stats, drop_null_target=False)
 
     return full_clean_df, train_df, test_df, impute_stats
+

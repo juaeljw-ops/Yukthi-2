@@ -84,12 +84,13 @@ def get_chiller_timeline(
     Shows NORMAL -> WATCH -> INVESTIGATE -> PRIORITY progression.
     """
     timelines = load_json_file("timeline_replay.json")
+    lim = int(limit.default if hasattr(limit, "default") else limit) if limit else 1000
     for eq, records in timelines.items():
         if eq.upper() == equipment_id.upper():
             return {
                 "equipment": eq,
                 "total_records": len(records),
-                "timeline": records[-limit:],
+                "timeline": records[-lim:],
             }
     raise HTTPException(status_code=404, detail=f"Chiller {equipment_id} timeline not found")
 
@@ -101,12 +102,12 @@ def get_all_investigations(
 ):
     """Retrieve structured investigation cases with contextual evidence."""
     data = load_json_file("anomaly_results.json")
-    cases = data.get("investigation_cases", [])
+    cases = data if isinstance(data, list) else data.get("investigation_cases", [])
 
     if severity and isinstance(severity, str):
-        cases = [c for c in cases if c["severity"].upper() == severity.upper()]
+        cases = [c for c in cases if c.get("severity", "").upper() == severity.upper()]
     if equipment and isinstance(equipment, str):
-        cases = [c for c in cases if c["equipment"].upper() == equipment.upper()]
+        cases = [c for c in cases if c.get("equipment", "").upper() == equipment.upper()]
 
     return {
         "total_cases": len(cases),
@@ -118,8 +119,9 @@ def get_all_investigations(
 def get_investigation_case(case_id: str):
     """Retrieve details and context evidence for a specific investigation case."""
     data = load_json_file("anomaly_results.json")
-    cases = data.get("investigation_cases", [])
+    cases = data if isinstance(data, list) else data.get("investigation_cases", [])
     for c in cases:
-        if c["case_id"].upper() == case_id.upper():
+        if str(c.get("case_id", "")).upper() == case_id.upper():
             return c
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+

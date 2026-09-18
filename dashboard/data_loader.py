@@ -99,7 +99,7 @@ def get_fleet_metrics() -> Dict[str, Any]:
 
 def get_chiller_readings(chiller_id: str) -> pd.DataFrame:
     """
-    Adapter: Get raw readings for a specific chiller from the CSV.
+    Adapter: Get raw readings merged with ML anomaly outputs for a specific chiller.
     """
     df = load_raw_dataset()
     chiller_df = df[df["equipment_id"] == chiller_id].copy()
@@ -107,8 +107,44 @@ def get_chiller_readings(chiller_id: str) -> pd.DataFrame:
         # Fall back to first available chiller if ID not found
         fallback_id = sorted(df["equipment_id"].unique())[0]
         chiller_df = df[df["equipment_id"] == fallback_id].copy()
+
+    # Check if ML anomaly results exist and merge
+    ml_candidates = [
+        os.path.join(BASE_DIR, "outputs", "anomaly_results.csv"),
+        os.path.join(BASE_DIR, "outputs", "chiller_timeseries.csv"),
+    ]
+    for ml_csv in ml_candidates:
+        if os.path.exists(ml_csv) and os.path.getsize(ml_csv) > 0:
+            try:
+                ml_df = pd.read_csv(ml_csv)
+                ml_df["timestamp"] = pd.to_datetime(ml_df["timestamp"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+                ml_sub = ml_df[ml_df["equipment_id"] == chiller_id]
+                if not ml_sub.empty:
+                    merge_cols = [
+                        c for c in [
+                            "expected_energy", "residual", "deviation_pct",
+                            "residual_zscore", "anomaly_score", "is_abnormal",
+                            "consecutive_abnormal_readings", "persistent", "severity", "event_id", "trend"
+                        ] if c in ml_sub.columns and c not in chiller_df.columns
+                    ]
+                    if merge_cols:
+                        chiller_df = pd.merge(
+                            chiller_df,
+                            ml_sub[["timestamp"] + merge_cols],
+                            on="timestamp",
+                            how="left"
+                        )
+                    break
+            except Exception:
+                pass
+
+    if "severity" not in chiller_df.columns:
+        chiller_df["severity"] = "NORMAL"
+    if "is_abnormal" not in chiller_df.columns:
+        chiller_df["is_abnormal"] = False
     
     return chiller_df.reset_index(drop=True)
+
 
 
 def get_context_variables(df: pd.DataFrame) -> List[str]:

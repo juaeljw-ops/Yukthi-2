@@ -53,14 +53,16 @@ selected_chiller = st.sidebar.selectbox(
     index=chiller_ids.index(default_chiller) if default_chiller in chiller_ids else 0
 )
 
+fleet_metrics = get_fleet_metrics()
+total_records = fleet_metrics.get("total_readings", len(chiller_ids))
+
 st.sidebar.markdown("---")
-st.sidebar.caption("📊 **Source of Truth:** `development_dataset.csv` (25,003 readings)")
+st.sidebar.caption(f"📊 **Source of Truth:** `development_dataset.csv` ({total_records:,} readings)")
 
 # Load data for selected equipment
 df_chiller = get_chiller_readings(selected_chiller)
 expected_energy_series = get_expected_energy(selected_chiller)
 anomaly_data = get_anomaly_data(selected_chiller)
-fleet_metrics = get_fleet_metrics()
 
 # Main Tabs Navigation
 tab_fleet, tab_investigation, tab_replay = st.tabs([

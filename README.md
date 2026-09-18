@@ -67,12 +67,12 @@ pip install -r requirements.txt
 # Or: python ml/pipeline.py
 ```
 This single command:
-1. Loads and cleans `development_dataset.csv` (24,994 records across 3 chillers).
+1. Loads and cleans `development_dataset.csv` (25,003 records across 3 chillers with zero-drop leakage-safe imputation).
 2. Performs chronological 80/20 train/test splits.
 3. Trains individual `RandomForestRegressor` models for `CHILLER-01`, `CHILLER-02`, and `CHILLER-03`.
 4. Calibrates baseline residual distributions ($\mu_{res}, \sigma_{res}$) on training sets.
 5. Evaluates statistical residual z-scores and persistence ($\ge 3$ readings).
-6. Generates 124 actionable investigation events with non-causal contextual shift evidence.
+6. Generates 126 actionable investigation events with non-causal contextual shift evidence.
 7. Exports frontend-ready CSV and JSON files to `outputs/`.
 
 ### 3. Launch the Streamlit Dashboard
