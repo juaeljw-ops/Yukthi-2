@@ -879,32 +879,17 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         is_anomaly_mask = pd.Series([False] * total_len)
 
     anomaly_indices = df_chiller.index[is_anomaly_mask].tolist()
-    normal_indices = df_chiller.index[~is_anomaly_mask].tolist()
     total_anomalies = len(anomaly_indices)
-    total_normals = len(normal_indices)
 
-    # Master index state for this chiller
-    cur_idx_key = f"cur_obs_idx_{chiller_id}"
-    anom_pos_key = f"anom_pos_{chiller_id}"
-    norm_pos_key = f"norm_pos_{chiller_id}"
-
-    if cur_idx_key not in st.session_state:
-        st.session_state[cur_idx_key] = 0
-    st.session_state[cur_idx_key] = min(max(0, st.session_state[cur_idx_key]), total_len - 1)
-
-    if anom_pos_key not in st.session_state:
-        st.session_state[anom_pos_key] = 0
+    anom_key = f"anom_pos_{chiller_id}"
+    if anom_key not in st.session_state:
+        st.session_state[anom_key] = 0
     if total_anomalies > 0:
-        st.session_state[anom_pos_key] = min(max(0, st.session_state[anom_pos_key]), total_anomalies - 1)
+        st.session_state[anom_key] = min(max(0, st.session_state[anom_key]), total_anomalies - 1)
 
-    if norm_pos_key not in st.session_state:
-        st.session_state[norm_pos_key] = 0
-    if total_normals > 0:
-        st.session_state[norm_pos_key] = min(max(0, st.session_state[norm_pos_key]), total_normals - 1)
-
-    mode_options = ["ALL OBSERVATIONS", "NORMAL EVENTS ONLY", "ANOMALOUS EVENTS ONLY"]
+    mode_options = ["ALL OBSERVATIONS", "ANOMALOUS EVENTS ONLY"] if total_anomalies > 0 else ["ALL OBSERVATIONS"]
     
-    col_mode, col_ctrl = st.columns([1.8, 3.2])
+    col_mode, col_ctrl = st.columns([1.5, 3.5])
     with col_mode:
         selected_mode = st.radio(
             "Navigation Scope:",
@@ -914,125 +899,31 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             label_visibility="collapsed"
         )
 
-    norm_widget_key = f"norm_select_{chiller_id}"
-    anom_widget_key = f"anom_select_{chiller_id}"
-    all_widget_key = f"sel_all_ts_{chiller_id}"
-
-    # Handle cross-mode synchronization
-    last_mode_key = f"last_nav_mode_{chiller_id}"
-    if last_mode_key in st.session_state and st.session_state[last_mode_key] != selected_mode:
-        curr_master = st.session_state.get(cur_idx_key, 0)
-        if selected_mode == "NORMAL EVENTS ONLY" and total_normals > 0:
-            if curr_master in normal_indices:
-                pos = normal_indices.index(curr_master)
-            else:
-                pos = min(range(total_normals), key=lambda i: abs(normal_indices[i] - curr_master))
-            st.session_state[norm_pos_key] = pos
-            st.session_state[norm_widget_key] = pos
-            st.session_state[cur_idx_key] = normal_indices[pos]
-        elif selected_mode == "ANOMALOUS EVENTS ONLY" and total_anomalies > 0:
-            if curr_master in anomaly_indices:
-                pos = anomaly_indices.index(curr_master)
-            else:
-                pos = min(range(total_anomalies), key=lambda i: abs(anomaly_indices[i] - curr_master))
-            st.session_state[anom_pos_key] = pos
-            st.session_state[anom_widget_key] = pos
-            st.session_state[cur_idx_key] = anomaly_indices[pos]
-        elif selected_mode == "ALL OBSERVATIONS":
-            st.session_state[all_widget_key] = st.session_state[cur_idx_key]
-        st.session_state[last_mode_key] = selected_mode
-    else:
-        st.session_state[last_mode_key] = selected_mode
-
-    # 1. NORMAL EVENTS ONLY MODE
-    if selected_mode == "NORMAL EVENTS ONLY" and total_normals > 0:
-        if norm_pos_key not in st.session_state or st.session_state[norm_pos_key] >= total_normals:
-            st.session_state[norm_pos_key] = 0
-        if norm_widget_key not in st.session_state or st.session_state[norm_widget_key] >= total_normals:
-            st.session_state[norm_widget_key] = st.session_state[norm_pos_key]
-
+    if selected_mode == "ANOMALOUS EVENTS ONLY" and total_anomalies > 0:
+        anom_sel_key = f"anom_select_{chiller_id}"
         with col_ctrl:
             c_prev, c_stat, c_next = st.columns([1, 2, 1])
             with c_prev:
-                if st.button("< PREV NORMAL", key=f"btn_norm_prev_{chiller_id}", use_container_width=True):
-                    new_pos = max(0, st.session_state[norm_pos_key] - 1)
-                    st.session_state[norm_pos_key] = new_pos
-                    st.session_state[norm_widget_key] = new_pos
-                    st.session_state[cur_idx_key] = normal_indices[new_pos]
+                if st.button("< PREV", key=f"btn_prev_{chiller_id}", use_container_width=True):
+                    st.session_state[anom_key] = max(0, st.session_state[anom_key] - 1)
+                    st.session_state[anom_sel_key] = st.session_state[anom_key]
                     st.rerun()
             with c_next:
-                if st.button("NEXT NORMAL >", key=f"btn_norm_next_{chiller_id}", use_container_width=True):
-                    new_pos = min(total_normals - 1, st.session_state[norm_pos_key] + 1)
-                    st.session_state[norm_pos_key] = new_pos
-                    st.session_state[norm_widget_key] = new_pos
-                    st.session_state[cur_idx_key] = normal_indices[new_pos]
+                if st.button("NEXT >", key=f"btn_next_{chiller_id}", use_container_width=True):
+                    st.session_state[anom_key] = min(total_anomalies - 1, st.session_state[anom_key] + 1)
+                    st.session_state[anom_sel_key] = st.session_state[anom_key]
                     st.rerun()
             with c_stat:
                 st.markdown(
                     f"""
-                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #4E9A76; font-weight: 700;">
-                        NORMAL {st.session_state[norm_pos_key] + 1:,} OF {total_normals:,}
+                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #BFA15F; font-weight: 700;">
+                        INCIDENT {st.session_state[anom_key] + 1} OF {total_anomalies}
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
-        def format_normal(i: int) -> str:
-            idx = normal_indices[i]
-            r = df_chiller.iloc[idx]
-            ts = str(r.get("timestamp", ""))
-            act = float(r.get(energy_col, 0.0))
-            dev = float(r.get("deviation_pct", 0.0)) if pd.notna(r.get("deviation_pct")) else 0.0
-            return f"NORMAL #{i+1:04d} // {ts} // {act:.1f} kWh // DEV: {dev:+.1f}%"
-
-        selected_norm_pos = st.selectbox(
-            "Jump to Normal Event Timestamp:",
-            options=list(range(total_normals)),
-            format_func=format_normal,
-            index=st.session_state[norm_pos_key],
-            key=norm_widget_key
-        )
-        if selected_norm_pos != st.session_state[norm_pos_key]:
-            st.session_state[norm_pos_key] = selected_norm_pos
-            st.session_state[cur_idx_key] = normal_indices[selected_norm_pos]
-            st.rerun()
-
-        selected_idx = normal_indices[st.session_state[norm_pos_key]]
-
-    # 2. ANOMALOUS EVENTS ONLY MODE
-    elif selected_mode == "ANOMALOUS EVENTS ONLY" and total_anomalies > 0:
-        if anom_pos_key not in st.session_state or st.session_state[anom_pos_key] >= total_anomalies:
-            st.session_state[anom_pos_key] = 0
-        if anom_widget_key not in st.session_state or st.session_state[anom_widget_key] >= total_anomalies:
-            st.session_state[anom_widget_key] = st.session_state[anom_pos_key]
-
-        with col_ctrl:
-            c_prev, c_stat, c_next = st.columns([1, 2, 1])
-            with c_prev:
-                if st.button("< PREV INCIDENT", key=f"btn_prev_{chiller_id}", use_container_width=True):
-                    new_pos = max(0, st.session_state[anom_pos_key] - 1)
-                    st.session_state[anom_pos_key] = new_pos
-                    st.session_state[anom_widget_key] = new_pos
-                    st.session_state[cur_idx_key] = anomaly_indices[new_pos]
-                    st.rerun()
-            with c_next:
-                if st.button("NEXT INCIDENT >", key=f"btn_next_{chiller_id}", use_container_width=True):
-                    new_pos = min(total_anomalies - 1, st.session_state[anom_pos_key] + 1)
-                    st.session_state[anom_pos_key] = new_pos
-                    st.session_state[anom_widget_key] = new_pos
-                    st.session_state[cur_idx_key] = anomaly_indices[new_pos]
-                    st.rerun()
-            with c_stat:
-                st.markdown(
-                    f"""
-                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #B85450; font-weight: 700;">
-                        ANOMALY {st.session_state[anom_pos_key] + 1} OF {total_anomalies}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-        def format_anomaly(i: int) -> str:
+        def format_incident(i: int) -> str:
             idx = anomaly_indices[i]
             r = df_chiller.iloc[idx]
             ts = str(r.get("timestamp", ""))
@@ -1041,85 +932,32 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             z = float(r.get("residual_zscore", 0.0)) if pd.notna(r.get("residual_zscore")) else 0.0
             return f"INCIDENT #{i+1:03d} // {ts} // [{sev}] // DEV: {dev:+.1f}% // Z: {z:+.2f}σ"
 
+        if anom_sel_key not in st.session_state or st.session_state[anom_sel_key] >= total_anomalies:
+            st.session_state[anom_sel_key] = st.session_state[anom_key]
+
         selected_incident_pos = st.selectbox(
             "Jump to Anomaly Incident:",
             options=list(range(total_anomalies)),
-            format_func=format_anomaly,
-            index=st.session_state[anom_pos_key],
-            key=anom_widget_key
+            format_func=format_incident,
+            index=st.session_state[anom_key],
+            key=anom_sel_key
         )
-        if selected_incident_pos != st.session_state[anom_pos_key]:
-            st.session_state[anom_pos_key] = selected_incident_pos
-            st.session_state[cur_idx_key] = anomaly_indices[selected_incident_pos]
+        if selected_incident_pos != st.session_state[anom_key]:
+            st.session_state[anom_key] = selected_incident_pos
             st.rerun()
 
-        selected_idx = anomaly_indices[st.session_state[anom_pos_key]]
+        selected_idx = anomaly_indices[st.session_state[anom_key]]
 
-    # 3. ALL OBSERVATIONS MODE
     else:
-        if cur_idx_key not in st.session_state or st.session_state[cur_idx_key] >= total_len:
-            st.session_state[cur_idx_key] = 0
-        if all_widget_key not in st.session_state or st.session_state[all_widget_key] >= total_len:
-            st.session_state[all_widget_key] = st.session_state[cur_idx_key]
-
-        with col_ctrl:
-            c_day_prev, c_prev, c_stat, c_next, c_day_next = st.columns([1, 1, 2.2, 1, 1])
-            with c_day_prev:
-                if st.button("<< -1D", key=f"btn_dprev_{chiller_id}", use_container_width=True, help="Jump back 24 hours (48 intervals)"):
-                    new_idx = max(0, st.session_state[cur_idx_key] - 48)
-                    st.session_state[cur_idx_key] = new_idx
-                    st.session_state[all_widget_key] = new_idx
-                    st.rerun()
-            with c_prev:
-                if st.button("< PREV", key=f"btn_all_prev_{chiller_id}", use_container_width=True, help="Previous 30-min reading"):
-                    new_idx = max(0, st.session_state[cur_idx_key] - 1)
-                    st.session_state[cur_idx_key] = new_idx
-                    st.session_state[all_widget_key] = new_idx
-                    st.rerun()
-            with c_next:
-                if st.button("NEXT >", key=f"btn_all_next_{chiller_id}", use_container_width=True, help="Next 30-min reading"):
-                    new_idx = min(total_len - 1, st.session_state[cur_idx_key] + 1)
-                    st.session_state[cur_idx_key] = new_idx
-                    st.session_state[all_widget_key] = new_idx
-                    st.rerun()
-            with c_day_next:
-                if st.button("+1D >>", key=f"btn_dnext_{chiller_id}", use_container_width=True, help="Jump forward 24 hours (48 intervals)"):
-                    new_idx = min(total_len - 1, st.session_state[cur_idx_key] + 48)
-                    st.session_state[cur_idx_key] = new_idx
-                    st.session_state[all_widget_key] = new_idx
-                    st.rerun()
-            with c_stat:
-                curr_ts_disp = timestamps[st.session_state[cur_idx_key]]
-                st.markdown(
-                    f"""
-                    <div style="text-align: center; padding-top: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; color: #BFA15F; font-weight: 700;">
-                        READING {st.session_state[cur_idx_key] + 1:,} OF {total_len:,}<br/>
-                        <span style="font-size: 0.68rem; color: #7A8494;">{curr_ts_disp}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-        def format_all_reading(i: int) -> str:
-            ts = timestamps[i]
-            r = df_chiller.iloc[i]
-            act = float(r.get(energy_col, 0.0))
-            sev = str(r.get("severity", "NORMAL"))
-            dev = float(r.get("deviation_pct", 0.0)) if pd.notna(r.get("deviation_pct")) else 0.0
-            return f"#{i+1:04d} // {ts} // {act:.1f} kWh // [{sev}] ({dev:+.1f}%)"
-
-        selected_all_ts = st.selectbox(
-            "Select / Search Observation Event Timestamp:",
-            options=list(range(total_len)),
-            format_func=format_all_reading,
-            index=st.session_state[cur_idx_key],
-            key=all_widget_key
+        default_val = anomaly_indices[0] if anomaly_indices else min(100, total_len - 1)
+        selected_idx = st.slider(
+            "Scrub through readings timeline:",
+            min_value=0,
+            max_value=total_len - 1,
+            value=default_val,
+            format="INDEX %d",
+            key=f"slider_{chiller_id}"
         )
-        if selected_all_ts != st.session_state[cur_idx_key]:
-            st.session_state[cur_idx_key] = selected_all_ts
-            st.rerun()
-
-        selected_idx = st.session_state[cur_idx_key]
 
     # Extract target record
     row = df_chiller.iloc[selected_idx]
@@ -1297,7 +1135,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         """
         <div class="section-header">
             <span class="section-title">FLEET-WIDE INCIDENT CHRONOLOGY OVERVIEW</span>
-            <span class="section-sub">COMPLETE DATASET TIMELINE // RED = ANOMALY // GREEN = NORMAL</span>
+            <span class="section-sub">COMPLETE DATASET TIMELINE // RED POINTS = ANOMALIES</span>
         </div>
         """,
         unsafe_allow_html=True
@@ -1306,19 +1144,15 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     step = max(1, len(df_chiller) // 1200)
     bg_df = df_chiller.iloc[::step].copy()
 
-    if row["timestamp"] not in bg_df["timestamp"].values:
-        bg_df = pd.concat([bg_df, df_chiller.iloc[[selected_idx]]]).sort_values("timestamp")
-
     fig_full = go.Figure()
 
-    # Normal background trace in muted sage green
     fig_full.add_trace(
         go.Scatter(
             x=bg_df["timestamp"],
             y=bg_df[energy_col],
             mode="lines",
-            name="NORMAL PROFILE",
-            line=dict(color="#2D4337", width=1),
+            name="OBSERVED PROFILE",
+            line=dict(color="#334155", width=1),
             hoverinfo="skip"
         )
     )
