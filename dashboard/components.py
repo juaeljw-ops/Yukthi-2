@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 from typing import Dict, List, Any, Optional
 from dashboard.data_loader import get_context_variables
@@ -7,120 +8,224 @@ from dashboard.data_loader import get_context_variables
 
 def get_status_style(status_str: str) -> Dict[str, str]:
     st_upper = str(status_str).upper()
-    if st_upper in ["INVESTIGATE", "HIGH"]:
-        return {"icon": "🔴", "label": "INVESTIGATE", "color": "#EF4444", "bg": "rgba(239, 68, 68, 0.12)", "border": "rgba(239, 68, 68, 0.4)"}
-    elif st_upper in ["PRIORITY", "CRITICAL"]:
-        return {"icon": "🚨", "label": "PRIORITY", "color": "#F43F5E", "bg": "rgba(244, 63, 94, 0.15)", "border": "rgba(244, 63, 94, 0.5)"}
+    if st_upper in ["PRIORITY", "CRITICAL"]:
+        return {
+            "tag": "[CRITICAL]",
+            "label": "CRITICAL",
+            "color": "#F43F5E",
+            "bg": "rgba(244, 63, 94, 0.08)",
+            "border": "#7F1D1D"
+        }
+    elif st_upper in ["INVESTIGATE", "HIGH"]:
+        return {
+            "tag": "[INVESTIGATE]",
+            "label": "INVESTIGATE",
+            "color": "#EF4444",
+            "bg": "rgba(239, 68, 68, 0.08)",
+            "border": "#991B1B"
+        }
     elif st_upper in ["WATCH", "WARNING", "MEDIUM"]:
-        return {"icon": "🟡", "label": "WATCH", "color": "#E5B842", "bg": "rgba(229, 184, 66, 0.12)", "border": "rgba(212, 175, 55, 0.45)"}
-    elif st_upper in ["NORMAL"]:
-        return {"icon": "🟢", "label": "NORMAL", "color": "#10B981", "bg": "rgba(16, 185, 129, 0.12)", "border": "rgba(16, 185, 129, 0.4)"}
+        return {
+            "tag": "[WATCH]",
+            "label": "WATCH",
+            "color": "#F59E0B",
+            "bg": "rgba(245, 158, 11, 0.08)",
+            "border": "#78350F"
+        }
+    elif st_upper in ["NORMAL", "NOMINAL"]:
+        return {
+            "tag": "[NOMINAL]",
+            "label": "NOMINAL",
+            "color": "#10B981",
+            "bg": "rgba(16, 185, 129, 0.08)",
+            "border": "#064E3B"
+        }
     else:
-        return {"icon": "⚪", "label": status_str, "color": "#94A3B8", "bg": "rgba(148, 163, 184, 0.10)", "border": "#334155"}
+        return {
+            "tag": f"[{st_upper}]",
+            "label": st_upper,
+            "color": "#94A3B8",
+            "bg": "rgba(148, 163, 184, 0.06)",
+            "border": "#334155"
+        }
 
 
 def inject_custom_css():
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
         html, body, [class*="css"] {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: -0.01em;
         }
 
         .stApp {
-            background-color: #0A0D14;
-            color: #EDE8DE;
+            background-color: #080A0F;
+            color: #E2E8F0;
         }
 
-        /* Metric cards */
-        .metric-card {
-            background: #111622;
-            border: 1px solid rgba(212, 175, 55, 0.18);
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
-            position: relative;
+        .telemetry-mono {
+            font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+            font-feature-settings: "tnum" 1;
         }
 
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
+        .metric-panel {
+            background: #0D111A;
+            border: 1px solid #1E2638;
+            border-radius: 2px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
         }
-        
-        .metric-title {
-            color: #9C968B;
-            font-size: 0.78rem;
+
+        .metric-panel-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
             font-weight: 600;
+            color: #64748B;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 6px;
         }
-        
-        .metric-value {
-            color: #FAF6EE;
-            font-size: 1.85rem;
+
+        .metric-panel-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.65rem;
             font-weight: 700;
+            color: #F1F5F9;
             font-feature-settings: "tnum" 1;
+            line-height: 1.15;
         }
 
-        .gold-accent {
-            color: #D4AF37 !important;
+        .metric-panel-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: #64748B;
+            margin-top: 6px;
+            letter-spacing: 0.02em;
         }
 
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.80rem;
+        .asset-card {
+            background: #0D111A;
+            border: 1px solid #1E2638;
+            border-radius: 2px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .status-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.70rem;
             font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 2px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid #1E2638;
+            padding-bottom: 6px;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #F1F5F9;
+            letter-spacing: 0.06em;
+        }
+
+        .section-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.70rem;
+            color: #64748B;
             letter-spacing: 0.04em;
         }
 
-        .fleet-card {
-            background: #111622;
-            border: 1px solid rgba(212, 175, 55, 0.18);
-            border-radius: 8px;
-            padding: 18px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-        }
-
-        .rec-item {
-            background: rgba(212, 175, 55, 0.05);
-            border-left: 3px solid #D4AF37;
-            padding: 12px 16px;
-            border-radius: 0 6px 6px 0;
-            margin-bottom: 10px;
-            color: #EDE8DE;
-            font-size: 0.94rem;
-        }
-
-        /* Streamlit Tab styling */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 8px;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            gap: 4px;
+            border-bottom: 1px solid #1E2638;
+            background: transparent;
         }
 
         .stTabs [data-baseweb="tab"] {
-            color: #8E8A82;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
             font-weight: 600;
-            border-radius: 6px 6px 0 0;
-            padding: 10px 18px;
+            color: #64748B;
+            border-radius: 2px 2px 0 0;
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid transparent;
+            letter-spacing: 0.04em;
         }
 
         .stTabs [aria-selected="true"] {
-            color: #D4AF37 !important;
-            border-bottom: 2px solid #D4AF37 !important;
-            background: rgba(212, 175, 55, 0.06);
+            color: #C8A252 !important;
+            border: 1px solid #1E2638 !important;
+            border-bottom: 2px solid #C8A252 !important;
+            background: #0D111A !important;
+        }
+
+        .stButton > button {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            font-weight: 600;
+            background: #0D111A;
+            color: #CBD5E1;
+            border: 1px solid #1E2638;
+            border-radius: 2px;
+            padding: 6px 14px;
+            letter-spacing: 0.04em;
+            transition: all 0.15s ease;
+        }
+
+        .stButton > button:hover {
+            border-color: #C8A252;
+            color: #C8A252;
+            background: #121824;
+        }
+
+        div[data-baseweb="select"] > div {
+            background-color: #0D111A !important;
+            border: 1px solid #1E2638 !important;
+            border-radius: 2px !important;
+            color: #F1F5F9 !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 0.80rem !important;
+        }
+
+        div[data-baseweb="input"] input {
+            background-color: #0D111A !important;
+            border-radius: 2px !important;
+            color: #F1F5F9 !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 0.80rem !important;
+        }
+
+        .telemetry-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #141A26;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.76rem;
+        }
+
+        .telemetry-row-label {
+            color: #64748B;
+        }
+
+        .telemetry-row-val {
+            color: #E2E8F0;
+            font-weight: 600;
         }
         </style>
         """,
@@ -129,17 +234,24 @@ def inject_custom_css():
 
 
 def render_fleet_metrics_summary(metrics: Dict[str, Any]):
-    st.markdown("### 🏢 Fleet Overview")
-    st.caption("Operational equipment monitoring sourced directly from `development_dataset.csv`")
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">// 01 FLEET TELEMETRY & SYSTEM OVERVIEW</span>
+            <span class="section-sub">SOURCE: development_dataset.csv // SAMPLING: 30-MIN</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(
             f"""
-            <div class="metric-card">
-                <div class="metric-title">Total Chillers</div>
-                <div class="metric-value" style="color:#D4AF37;">{metrics['total_chillers']}</div>
-                <div style="font-size:0.82rem; color:#8E8A82;">Monitored Assets</div>
+            <div class="metric-panel">
+                <div class="metric-panel-header">MONITORED ASSETS</div>
+                <div class="metric-panel-val" style="color: #C8A252;">{metrics['total_chillers']}</div>
+                <div class="metric-panel-sub">Active Telemetry Units</div>
             </div>
             """,
             unsafe_allow_html=True
@@ -147,10 +259,10 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
     with c2:
         st.markdown(
             f"""
-            <div class="metric-card">
-                <div class="metric-title">Total Dataset Readings</div>
-                <div class="metric-value" style="color:#FAF6EE;">{metrics['total_readings']:,}</div>
-                <div style="font-size:0.82rem; color:#8E8A82;">Half-hourly points</div>
+            <div class="metric-panel">
+                <div class="metric-panel-header">DATASET OBSERVATIONS</div>
+                <div class="metric-panel-val">{metrics['total_readings']:,}</div>
+                <div class="metric-panel-sub">Half-Hourly Records</div>
             </div>
             """,
             unsafe_allow_html=True
@@ -158,24 +270,28 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
     with c3:
         st.markdown(
             f"""
-            <div class="metric-card">
-                <div class="metric-title">Date Range</div>
-                <div style="font-size:1.05rem; font-weight:700; color:#FAF6EE; margin-top:8px;">{metrics['date_min'][:10]}</div>
-                <div style="font-size:0.82rem; color:#8E8A82;">to {metrics['date_max'][:10]}</div>
+            <div class="metric-panel">
+                <div class="metric-panel-header">OBSERVATION WINDOW</div>
+                <div class="metric-panel-val" style="font-size: 1.15rem; margin-top: 4px; color: #E2E8F0;">
+                    {metrics['date_min'][:10]}
+                </div>
+                <div class="metric-panel-sub">TO {metrics['date_max'][:10]}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
     with c4:
         has_ml = any(c.get("has_ml", False) for c in metrics.get("chiller_stats", []))
+        status_color = "#10B981" if has_ml else "#F59E0B"
+        status_text = "[ACTIVE: MODEL CALIBRATED]" if has_ml else "[STANDBY: PENDING ML]"
         st.markdown(
             f"""
-            <div class="metric-card">
-                <div class="metric-title">ML Pipeline Status</div>
-                <div style="font-size:1.1rem; font-weight:700; color:{'#10B981' if has_ml else '#E5B842'}; margin-top:8px;">
-                    {'🟢 Model Connected' if has_ml else '🟡 Pending Model Output'}
+            <div class="metric-panel">
+                <div class="metric-panel-header">FORENSIC ENGINE STATUS</div>
+                <div class="metric-panel-val" style="font-size: 1.05rem; margin-top: 4px; color: {status_color};">
+                    {status_text}
                 </div>
-                <div style="font-size:0.82rem; color:#8E8A82;">{'Live baseline loaded' if has_ml else 'Awaiting model output'}</div>
+                <div class="metric-panel-sub">Residual Baseline Ingestion</div>
             </div>
             """,
             unsafe_allow_html=True
@@ -183,17 +299,31 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
 
 
 def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
-    st.markdown("#### 📋 Fleet Chiller Directory")
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">// 02 ASSET STATUS DIRECTORY</span>
+            <span class="section-sub">CHILLER OPERATIONAL STATUS MATRIX</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    search_query = st.text_input("🔍 Search Chiller ID:", "").strip().upper()
+    search_query = st.text_input("FILTER ASSET ID:", "", placeholder="e.g. CHILLER-01").strip().upper()
     
-    # Filter
     filtered = fleet_stats
     if search_query:
         filtered = [c for c in fleet_stats if search_query in c["equipment"].upper()]
 
     if not filtered:
-        st.info("No chillers matched your search query.")
+        st.markdown(
+            """
+            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+                [INFO] No equipment matched the search query.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         return
 
     cols = st.columns(len(filtered) if len(filtered) <= 3 else 3)
@@ -205,24 +335,37 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
         status = item.get("status", "UNASSESSED")
         style = get_status_style(status)
         dev = item.get("current_deviation_pct")
-        trend = item.get("trend", "N/A")
+
+        dev_str = f"+{dev:.1f}%" if dev is not None else "NOMINAL"
+        dev_color = style["color"] if (dev is not None and dev > 5.0) else "#10B981"
 
         with cols[idx % len(cols)]:
             st.markdown(
                 f"""
-                <div class="fleet-card" style="border-left: 3px solid {style['color']};">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="margin: 0; color: #FAF6EE; font-size: 1.25rem;">{cid}</h3>
-                        <span class="status-badge" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']};">
-                            {style['icon']} {style['label']}
+                <div class="asset-card" style="border-left: 3px solid {style['color']};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 700; color: #FFFFFF;">
+                            {cid}
+                        </span>
+                        <span class="status-tag" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']};">
+                            {style['tag']}
                         </span>
                     </div>
-                    <hr style="border-color: rgba(212, 175, 55, 0.15); margin: 12px 0;" />
-                    <div style="font-size: 0.88rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div>Readings: <strong style="color:#FAF6EE;">{readings:,}</strong></div>
-                        <div>Avg Energy: <strong style="color:#D4AF37;">{avg_e:.1f} kWh</strong></div>
-                        <div>Peak Energy: <strong style="color:#FAF6EE;">{max_e:.1f} kWh</strong></div>
-                        <div>Deviation: <strong style="color:{style['color']};">{f'+{dev:.1f}%' if dev is not None else 'Pending ML'}</strong></div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-row-label">READING COUNT</span>
+                        <span class="telemetry-row-val">{readings:,}</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-row-label">MEAN POWER</span>
+                        <span class="telemetry-row-val" style="color: #C8A252;">{avg_e:.1f} kWh</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-row-label">PEAK DEMAND</span>
+                        <span class="telemetry-row-val">{max_e:.1f} kWh</span>
+                    </div>
+                    <div class="telemetry-row" style="border-bottom: none;">
+                        <span class="telemetry-row-label">EXCEEDANCE DELTA</span>
+                        <span class="telemetry-row-val" style="color: {dev_color};">{dev_str}</span>
                     </div>
                 </div>
                 """,
@@ -231,71 +374,87 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
 
 
 def render_actual_energy_chart(df_chiller: pd.DataFrame, expected_series: Optional[pd.Series] = None, chiller_id: str = ""):
-    st.markdown(f"### 📈 ACTUAL ENERGY OVER TIME — `{chiller_id}`")
-    st.caption("Time-series energy consumption from `development_dataset.csv` (kWh)")
+    st.markdown(
+        f"""
+        <div class="section-header">
+            <span class="section-title">// 03 POWER DEMAND: OBSERVED vs EXPECTED BASELINE — {chiller_id}</span>
+            <span class="section-sub">SAMPLING: 30-MINUTES // ENERGY UNIT: kWh</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     if df_chiller.empty:
-        st.warning("No time-series readings available for this chiller.")
+        st.info(f"[INFO] No time-series records found for {chiller_id}.")
         return
 
     energy_col = "Chiller Energy Consumption (kWh)"
     if energy_col not in df_chiller.columns:
-        st.error(f"Missing column '{energy_col}' in dataset.")
+        st.error(f"[ERROR] Required column '{energy_col}' missing from telemetry.")
         return
 
     fig = go.Figure()
 
-    # Solid line for Actual Energy
     fig.add_trace(
         go.Scatter(
             x=df_chiller["timestamp"],
             y=df_chiller[energy_col],
-            name="Actual Energy (Observed)",
-            line=dict(color="#F8FAFC", width=2),
-            hovertemplate="<b>Timestamp:</b> %{x}<br><b>Actual Energy:</b> %{y:.1f} kWh<extra></extra>"
+            name="OBSERVED DEMAND",
+            line=dict(color="#F1F5F9", width=1.5),
+            hovertemplate="<b>TIMESTAMP:</b> %{x}<br><b>OBSERVED:</b> %{y:.1f} kWh<extra></extra>"
         )
     )
 
-    # Dashed line for Expected Energy if available
     if expected_series is not None and not expected_series.empty:
         fig.add_trace(
             go.Scatter(
                 x=df_chiller["timestamp"],
                 y=expected_series.reindex(df_chiller["timestamp"]).values,
-                name="Expected Energy (Baseline Model)",
-                line=dict(color="#D4AF37", width=2, dash="dash"),
-                hovertemplate="<b>Timestamp:</b> %{x}<br><b>Expected Energy:</b> %{y:.1f} kWh<extra></extra>"
+                name="MODEL BASELINE",
+                line=dict(color="#C8A252", width=1.5, dash="dash"),
+                hovertemplate="<b>TIMESTAMP:</b> %{x}<br><b>BASELINE:</b> %{y:.1f} kWh<extra></extra>"
             )
         )
-    else:
-        st.info("ℹ️ Baseline model output will appear here once ML pipeline finishes.")
 
     fig.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#111622",
-        plot_bgcolor="#0A0D14",
-        margin=dict(l=40, r=40, t=30, b=40),
-        height=400,
+        paper_bgcolor="#0D111A",
+        plot_bgcolor="#080A0F",
+        margin=dict(l=40, r=30, t=25, b=35),
+        height=380,
         hovermode="x unified",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        xaxis=dict(title="Timestamp", gridcolor="#1C2331", showgrid=True),
-        yaxis=dict(title="Energy Consumption (kWh)", gridcolor="#1C2331", showgrid=True)
+        font=dict(family="JetBrains Mono, monospace", size=11, color="#94A3B8"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(size=10)
+        ),
+        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True, zeroline=False),
+        yaxis=dict(title="POWER CONSUMPTION (kWh)", gridcolor="#141A26", linecolor="#1E2638", showgrid=True, zeroline=False)
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
 
-
 def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
-    st.markdown("### 🌡️ OPERATING CONDITIONS")
-    st.caption("Actual numerical context variables sourced directly from the dataset")
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">// 04 CONTEXTUAL SENSOR TELEMETRY</span>
+            <span class="section-sub">MULTIVARIATE THERMODYNAMIC CONTEXT EXCLUDING TARGET ENERGY</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     context_cols = get_context_variables(df_chiller)
     if not context_cols:
-        st.info("No additional contextual variables available in dataset.")
+        st.info("[INFO] No contextual sensors available in telemetry.")
         return
 
-    # Display KPI summary cards for available variables
     cols = st.columns(min(len(context_cols), 4))
     for idx, col_name in enumerate(context_cols[:4]):
         mean_val = df_chiller[col_name].mean()
@@ -305,22 +464,33 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
         with cols[idx % len(cols)]:
             st.markdown(
                 f"""
-                <div class="metric-card">
-                    <div class="metric-title">{col_name}</div>
-                    <div class="metric-value" style="color:#D4AF37; font-size:1.45rem;">{mean_val:.1f}</div>
-                    <div style="font-size:0.8rem; color:#8E8A82; margin-top:4px;">Min: {min_val:.1f} | Max: {max_val:.1f}</div>
+                <div class="metric-panel">
+                    <div class="metric-panel-header">{col_name}</div>
+                    <div class="metric-panel-val" style="color: #C8A252; font-size: 1.35rem;">
+                        {mean_val:.1f}
+                    </div>
+                    <div class="metric-panel-sub">
+                        MIN: {min_val:.1f} | MAX: {max_val:.1f}
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-    st.write("")
-    st.markdown("#### Selectable Operating Context Time-Series Chart")
+    st.markdown(
+        """
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #64748B; margin-top: 10px; margin-bottom: 4px;">
+            INTERACTIVE CONTEXT PARAMETER TRACE
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
     selected_var = st.selectbox(
         "Select context variable to plot against timestamp:",
         options=context_cols,
-        index=0
+        index=0,
+        label_visibility="collapsed"
     )
 
     fig = go.Figure()
@@ -328,50 +498,95 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
         go.Scatter(
             x=df_chiller["timestamp"],
             y=df_chiller[selected_var],
-            name=selected_var,
-            line=dict(color="#D4AF37", width=2),
-            hovertemplate=f"<b>Timestamp:</b> %{{x}}<br><b>{selected_var}:</b> %{{y:.2f}}<extra></extra>"
+            name=selected_var.upper(),
+            line=dict(color="#C8A252", width=1.5),
+            hovertemplate=f"<b>TIMESTAMP:</b> %{{x}}<br><b>{selected_var}:</b> %{{y:.2f}}<extra></extra>"
         )
     )
     
     fig.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#111622",
-        plot_bgcolor="#0A0D14",
-        margin=dict(l=40, r=40, t=30, b=40),
-        height=320,
-        xaxis=dict(title="Timestamp", gridcolor="#1C2331", showgrid=True),
-        yaxis=dict(title=selected_var, gridcolor="#1C2331", showgrid=True)
+        paper_bgcolor="#0D111A",
+        plot_bgcolor="#080A0F",
+        margin=dict(l=40, r=30, t=20, b=35),
+        height=280,
+        font=dict(family="JetBrains Mono, monospace", size=11, color="#94A3B8"),
+        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True),
+        yaxis=dict(title=selected_var.upper(), gridcolor="#141A26", linecolor="#1E2638", showgrid=True)
     )
     
     st.plotly_chart(fig, use_container_width=True)
 
 
 def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
-    st.markdown("### ⚖️ CONTEXTUAL DEVIATION")
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">// 05.1 EMPIRICAL DEVIATION ANALYSIS</span>
+            <span class="section-sub">ACTUAL vs PREDICTED ENERGY RESIDUAL</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
     if not anomaly_data or "expected_energy" not in anomaly_data:
-        st.info("ℹ️ Baseline expected energy model output pending ML pipeline.")
+        st.markdown(
+            """
+            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+                [INFO] Baseline model output pending ML pipeline calibration.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         return
 
     actual = anomaly_data.get("actual_energy", 0.0)
     expected = anomaly_data.get("expected_energy", 0.0)
     dev_pct = anomaly_data.get("deviation_pct", 0.0)
+    residual = actual - expected
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.metric("Actual Energy", f"{actual:.1f} kWh")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">ACTUAL DEMAND (OBSERVED)</div>
+                <div class="metric-panel-val">{actual:.1f} <span style="font-size: 0.9rem; color: #64748B;">kWh</span></div>
+                <div class="metric-panel-sub">PREVAILING READING</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c2:
-        st.metric("Expected Energy", f"{expected:.1f} kWh")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">MODEL BASELINE (EXPECTED)</div>
+                <div class="metric-panel-val" style="color: #C8A252;">{expected:.1f} <span style="font-size: 0.9rem; color: #64748B;">kWh</span></div>
+                <div class="metric-panel-sub">EMPIRICAL TARGET</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c3:
-        st.metric("Contextual Deviation", f"+{dev_pct:.1f}%", delta=f"{actual-expected:.1f} kWh")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">CONTEXTUAL EXCEEDANCE</div>
+                <div class="metric-panel-val" style="color: #EF4444;">+{dev_pct:.1f}%</div>
+                <div class="metric-panel-sub">DELTA: +{residual:.1f} kWh</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     st.markdown(
         f"""
-        <div style="background: rgba(212, 175, 55, 0.07); border-left: 3px solid #D4AF37; padding: 14px 18px; border-radius: 0 6px 6px 0; margin-top: 12px;">
-            <p style="margin:0; color:#EDE8DE; font-size:1.0rem;">
-                "Energy consumption is <strong style='color:#D4AF37;'>{dev_pct:.1f}% higher than expected</strong> for the observed operating conditions."
-            </p>
+        <div style="background: #0D111A; border: 1px solid #1E2638; border-left: 3px solid #C8A252; padding: 12px 16px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.80rem; color: #E2E8F0; line-height: 1.6;">
+            <div>[DIAGNOSTIC TELEMETRY LOG]</div>
+            <div style="color: #94A3B8; margin-top: 4px;">
+                Observed energy demand is <strong style="color: #C8A252;">+{dev_pct:.1f}% higher than expected</strong> for the measured thermodynamic operating conditions (ambient wet-bulb, water flow rates, and building RT load).
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -379,35 +594,58 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
 
 
 def render_persistence_analysis(anomaly_data: Optional[Dict[str, Any]]):
-    st.markdown("### ⏳ PERSISTENCE ANALYSIS")
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">// 05.2 SEQUENCE PERSISTENCE & SEVERITY</span>
+            <span class="section-sub">TEMPORAL CONTINUITY FILTERING (WINDOW >= 3 PERIODS)</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     if not anomaly_data:
-        st.info("ℹ️ Persistence timeline and severity evaluation pending ML output connection.")
+        st.markdown(
+            """
+            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+                [INFO] Persistence evaluation pending ML anomaly results.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         return
 
     consec = anomaly_data.get("consecutive_abnormal_readings", 0)
     status = anomaly_data.get("severity", "NORMAL")
     trend = anomaly_data.get("trend", "STABLE")
     style = get_status_style(status)
+    duration_min = consec * 30
 
     st.markdown(
         f"""
-        <div style="background: #111622; border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 8px; padding: 18px; margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="asset-card" style="margin-bottom: 0;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
-                    <span style="color: #8E8A82; font-size: 0.80rem; letter-spacing: 0.05em;">STATUS EVALUATION</span><br/>
-                    <span class="status-badge" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']}; margin-top: 4px;">
-                        {style['icon']} {status}
+                    <div class="metric-panel-header">SEVERITY CLASSIFICATION</div>
+                    <span class="status-tag" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']}; margin-top: 4px;">
+                        {style['tag']}
                     </span>
                 </div>
                 <div>
-                    <span style="color: #8E8A82; font-size: 0.80rem; letter-spacing: 0.05em;">CONSECUTIVE ABNORMAL READINGS</span><br/>
-                    <strong style="color: #E5B842; font-size: 1.4rem;">{consec} readings</strong>
+                    <div class="metric-panel-header">PERSISTENT SEQUENCE</div>
+                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #F1F5F9; margin-top: 2px;">
+                        {consec} <span style="font-size: 0.80rem; color: #64748B;">READINGS ({duration_min} MIN)</span>
+                    </div>
                 </div>
                 <div>
-                    <span style="color: #8E8A82; font-size: 0.80rem; letter-spacing: 0.05em;">DEVIATION TREND</span><br/>
-                    <strong style="color: #FAF6EE; font-size: 1.4rem;">{trend}</strong>
+                    <div class="metric-panel-header">DEVIATION TRAJECTORY</div>
+                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #C8A252; margin-top: 2px;">
+                        {trend}
+                    </div>
                 </div>
+            </div>
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #1E2638; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #64748B;">
+                FILTER CRITERIA: Transient single-period spikes filtered. Persistent state confirmed after >=3 consecutive periods beyond 2.5 sigma threshold.
             </div>
         </div>
         """,
@@ -416,30 +654,84 @@ def render_persistence_analysis(anomaly_data: Optional[Dict[str, Any]]):
 
 
 def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
-    st.markdown("### 📝 INVESTIGATION REPORT")
-
-    if not anomaly_data:
-        st.info("ℹ️ Structured investigation report will display once ML model anomaly scoring is generated.")
-        return
-
-    summary = anomaly_data.get("investigation_summary", "Review contextual parameter shifts around anomaly window.")
-    recommendations = anomaly_data.get("recommended_investigation", [])
-
     st.markdown(
-        f"""
-        <div style="background: #111622; border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-            <h4 style="margin-top:0; color:#D4AF37; letter-spacing:0.04em;">INVESTIGATION REQUIRED</h4>
-            <p style="color:#EDE8DE; line-height:1.6;">"{summary}"</p>
-            <h5 style="color:#8E8A82; margin-top:16px; text-transform:uppercase; font-size:0.80rem; letter-spacing:0.06em;">Suggested Engineering Actions</h5>
+        """
+        <div class="section-header">
+            <span class="section-title">// 05.3 AUTOMATED ROOT-CAUSE ATTRIBUTION & ACTIONS</span>
+            <span class="section-sub">DECISION SUPPORT & CORRECTIVE ACTION PROCEDURES</span>
+        </div>
         """,
         unsafe_allow_html=True
     )
 
-    for rec in recommendations:
+    if not anomaly_data:
+        st.markdown(
+            """
+            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+                [INFO] Investigation report will display once ML anomaly evaluation is generated.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        return
+
+    summary = anomaly_data.get("investigation_summary", "Review contextual parameter shifts around anomaly window.")
+    recommendations = anomaly_data.get("recommended_investigation", [])
+    context_changes = anomaly_data.get("context_changes", [])
+
+    st.markdown(
+        f"""
+        <div class="asset-card">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #C8A252; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+                ATTRIBUTION SUMMARY
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #E2E8F0; line-height: 1.6; margin-bottom: 14px;">
+                {summary}
+            </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    if context_changes:
+        st.markdown(
+            """
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.70rem; color: #64748B; text-transform: uppercase; margin-bottom: 8px;">
+                OBSERVED CONTEXTUAL PARAMETER DRIFT
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        for cc in context_changes:
+            var_name = cc.get("variable", "Context Sensor")
+            pct = cc.get("change_pct", 0.0)
+            direction = cc.get("direction", "SHIFT")
+            st.markdown(
+                f"""
+                <div class="telemetry-row" style="padding: 4px 0;">
+                    <span class="telemetry-row-label">{var_name}</span>
+                    <span class="telemetry-row-val" style="color: {'#EF4444' if abs(pct) > 10 else '#C8A252'};">
+                        {direction} ({pct:+.1f}%)
+                    </span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown(
+        """
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.70rem; color: #64748B; text-transform: uppercase; margin-top: 14px; margin-bottom: 8px;">
+            RECOMMENDED ENGINEERING ACTIONS
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    for idx, rec in enumerate(recommendations, 1):
         st.markdown(
             f"""
-            <div class="rec-item">
-                <span style="color:#D4AF37; font-weight:700;">✓</span> {rec}
+            <div style="background: #080A0F; border: 1px solid #1E2638; border-left: 2px solid #C8A252; padding: 10px 14px; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #E2E8F0; display: flex; gap: 10px;">
+                <span style="color: #C8A252; font-weight: 700;">[ACTION {idx:02d}]</span>
+                <span>{rec}</span>
             </div>
             """,
             unsafe_allow_html=True
@@ -449,18 +741,23 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
 
 
 def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
-    st.markdown(f"### 🎬 ANOMALY REPLAY & EVENT CLASSIFIER — `{chiller_id}`")
-    st.caption("Chronological time-series replay with real-time operational classification (🔴 Anomaly / 🟢 Normal)")
+    st.markdown(
+        f"""
+        <div class="section-header">
+            <span class="section-title">// 06 CHRONOLOGICAL REPLAY & INCIDENT CLASSIFIER — {chiller_id}</span>
+            <span class="section-sub">SAMPLING: 30-MINUTES // RESIDUAL EVALUATION ENGINE</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     if df_chiller.empty:
-        st.warning("No time-series data available for replay.")
+        st.info(f"[INFO] No time-series records available for {chiller_id}.")
         return
 
     energy_col = "Chiller Energy Consumption (kWh)"
-    timestamps = list(df_chiller["timestamp"])
-    total_len = len(timestamps)
+    total_len = len(df_chiller)
 
-    # Determine anomaly masks
     has_severity = "severity" in df_chiller.columns
     if has_severity:
         is_anomaly_mask = (df_chiller["severity"] != "NORMAL") | (df_chiller.get("is_abnormal", False) == True)
@@ -470,37 +767,73 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     anomaly_indices = df_chiller.index[is_anomaly_mask].tolist()
     total_anomalies = len(anomaly_indices)
 
-    # Quick Jump Controls for presentation demo
-    c_nav1, c_nav2 = st.columns([3, 1])
-    with c_nav2:
-        jump_mode = st.selectbox(
-            "🧭 Jump to:",
-            options=["Scrub All Timestamps", "Anomalous Events Only"] if total_anomalies > 0 else ["Scrub All Timestamps"],
-            index=0
+    anom_key = f"anom_pos_{chiller_id}"
+    if anom_key not in st.session_state:
+        st.session_state[anom_key] = 0
+    if total_anomalies > 0:
+        st.session_state[anom_key] = min(max(0, st.session_state[anom_key]), total_anomalies - 1)
+
+    mode_options = ["ALL OBSERVATIONS", "ANOMALOUS EVENTS ONLY"] if total_anomalies > 0 else ["ALL OBSERVATIONS"]
+    
+    col_mode, col_ctrl = st.columns([1.5, 3.5])
+    with col_mode:
+        selected_mode = st.radio(
+            "Navigation Scope:",
+            options=mode_options,
+            horizontal=True,
+            key=f"mode_{chiller_id}",
+            label_visibility="collapsed"
         )
 
-    if jump_mode == "Anomalous Events Only" and total_anomalies > 0:
-        def format_anomaly(idx: int) -> str:
+    if selected_mode == "ANOMALOUS EVENTS ONLY" and total_anomalies > 0:
+        with col_ctrl:
+            c_prev, c_stat, c_next = st.columns([1, 2, 1])
+            with c_prev:
+                if st.button("< PREV", key=f"btn_prev_{chiller_id}", use_container_width=True):
+                    st.session_state[anom_key] = max(0, st.session_state[anom_key] - 1)
+                    st.rerun()
+            with c_next:
+                if st.button("NEXT >", key=f"btn_next_{chiller_id}", use_container_width=True):
+                    st.session_state[anom_key] = min(total_anomalies - 1, st.session_state[anom_key] + 1)
+                    st.rerun()
+            with c_stat:
+                st.markdown(
+                    f"""
+                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: #C8A252; font-weight: 700;">
+                        INCIDENT {st.session_state[anom_key] + 1} OF {total_anomalies}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        def format_incident(i: int) -> str:
+            idx = anomaly_indices[i]
             r = df_chiller.loc[idx]
+            ts = str(r.get("timestamp", ""))
             sev = str(r.get("severity", "ANOMALY"))
             dev = float(r.get("deviation_pct", 0.0)) if pd.notna(r.get("deviation_pct")) else 0.0
-            ts = str(r.get("timestamp", ""))
-            return f"Observation #{idx:,} • {ts} • {sev} ({dev:+.1f}%)"
+            z = float(r.get("residual_zscore", 0.0)) if pd.notna(r.get("residual_zscore")) else 0.0
+            return f"INCIDENT #{i+1:03d} // {ts} // [{sev}] // DEV: {dev:+.1f}% // Z: {z:+.2f}σ"
 
-        selected_idx = st.selectbox(
-            "Select Anomaly Incident:",
-            options=anomaly_indices,
-            format_func=format_anomaly,
-            index=0
+        selected_incident_pos = st.selectbox(
+            "Jump to Anomaly Incident:",
+            options=list(range(total_anomalies)),
+            format_func=format_incident,
+            index=st.session_state[anom_key],
+            key=f"anom_select_{chiller_id}"
         )
+        st.session_state[anom_key] = selected_incident_pos
+        selected_idx = anomaly_indices[selected_incident_pos]
+
     else:
         default_val = anomaly_indices[0] if anomaly_indices else min(100, total_len - 1)
         selected_idx = st.slider(
-            "⏱️ Drag timeline slider to scrub through readings:",
+            "Scrub through readings timeline:",
             min_value=0,
             max_value=total_len - 1,
             value=default_val,
-            format="Reading %d"
+            format="INDEX %d",
+            key=f"slider_{chiller_id}"
         )
 
     row = df_chiller.iloc[selected_idx]
@@ -512,149 +845,303 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     z_score = float(row.get("residual_zscore", 0.0)) if pd.notna(row.get("residual_zscore")) else 0.0
     consec = int(row.get("consecutive_abnormal_readings", 0)) if pd.notna(row.get("consecutive_abnormal_readings")) else 0
     event_id = row.get("event_id", None)
+    residual = actual_e - expected_e
 
-    # =========================================================================
-    # 🔴 / 🟢 OPERATIONAL CLASSIFICATION BANNER
-    # =========================================================================
+    case_badge = f'<span style="font-family: monospace; font-size: 0.76rem; color: #C8A252; font-weight: 600;">CASE ID: {event_id}</span>' if pd.notna(event_id) else ""
+
     if is_abnormal or current_status in ["WATCH", "INVESTIGATE", "PRIORITY"]:
-        # HIGHLIGHTED IN RED (ANOMALY)
         border_color = "#EF4444"
-        bg_color = "rgba(239, 68, 68, 0.10)"
-        badge_bg = "#EF4444"
-        badge_text = f"🚨 ANOMALOUS EVENT — {current_status}"
+        bg_color = "rgba(239, 68, 68, 0.06)"
+        tag_bg = "#EF4444"
+        tag_text = f"[ANOMALOUS EVENT: {current_status}]"
         desc_text = (
-            f"Energy consumption is <strong>+{dev_pct:.1f}% higher than expected</strong> "
-            f"under the prevailing operating conditions. Statistical residual z-score is <strong>+{z_score:.2f}σ</strong> "
-            f"(threshold ≥ 2.5σ). Consecutive sequence: <strong>{consec} abnormal reading(s)</strong>."
+            f"Power demand exceeds statistical upper bound under prevailing operating conditions. "
+            f"Residual z-score: <strong>+{z_score:.2f}σ</strong> (threshold ≥ 2.50σ). "
+            f"Consumption is <strong>+{dev_pct:.1f}% (+{residual:.1f} kWh)</strong> above calibrated baseline. "
+            f"Persistence sequence: <strong>{consec} consecutive reading(s)</strong> ({consec * 30} minutes)."
         )
     else:
-        # HIGHLIGHTED IN GREEN (NORMAL)
         border_color = "#10B981"
-        bg_color = "rgba(16, 185, 129, 0.10)"
-        badge_bg = "#10B981"
-        badge_text = "🟢 NORMAL OPERATING STATE — NOMINAL"
+        bg_color = "rgba(16, 185, 129, 0.06)"
+        tag_bg = "#10B981"
+        tag_text = "[NOMINAL OPERATING STATE]"
         desc_text = (
-            f"Equipment behavior strictly conforms to learned thermodynamic baseline. "
-            f"Residual z-score is <strong>{z_score:+.2f}σ</strong> (within normal ±2.5σ statistical tolerance). "
-            f"Deviation: <strong>{dev_pct:+.1f}%</strong>."
+            f"Observed energy consumption complies with calibrated thermodynamic baseline. "
+            f"Residual z-score is <strong>{z_score:+.2f}σ</strong> (within normal ±2.50σ tolerance). "
+            f"Contextual deviation: <strong>{dev_pct:+.1f}%</strong>."
         )
 
     st.markdown(
         f"""
-        <div style="background: {bg_color}; border: 1px solid {border_color}; border-radius: 8px; padding: 20px; margin-top: 14px; margin-bottom: 20px;">
+        <div style="background: {bg_color}; border: 1px solid {border_color}; border-left: 4px solid {border_color}; border-radius: 2px; padding: 16px 20px; margin-top: 14px; margin-bottom: 18px;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="background: {badge_bg}; color: #FFFFFF; padding: 5px 14px; border-radius: 4px; font-weight: 700; font-size: 0.88rem; letter-spacing: 0.04em;">
-                        {badge_text}
+                    <span style="background: {tag_bg}; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.78rem; padding: 3px 10px; border-radius: 2px; letter-spacing: 0.06em;">
+                        {tag_text}
                     </span>
-                    {f'<span style="color: #D4AF37; font-size: 0.86rem; font-family: monospace; font-weight: 600;">ID: {event_id}</span>' if event_id else ''}
+                    {case_badge}
                 </div>
-                <div style="font-size: 1.0rem; font-weight: 600; color: #FAF6EE;">
-                    Observation #{selected_idx:,} &bull; {row['timestamp']}
+                <div class="telemetry-mono" style="font-size: 0.88rem; font-weight: 600; color: #F1F5F9;">
+                    INDEX #{selected_idx:,} &bull; {row['timestamp']}
                 </div>
             </div>
-            <div style="margin-top: 12px; font-size: 0.96rem; color: #EDE8DE; line-height: 1.5;">
+            <div style="margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.80rem; color: #CBD5E1; line-height: 1.5;">
                 {desc_text}
             </div>
-            <hr style="border-color: {border_color}; opacity: 0.25; margin: 14px 0;" />
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 0.90rem;">
-                <div>Actual Energy: <strong style="color: #FAF6EE; font-size: 1.15rem;">{actual_e:.1f} kWh</strong></div>
-                <div>Expected Baseline: <strong style="color: #D4AF37; font-size: 1.15rem;">{expected_e:.1f} kWh</strong></div>
-                <div>Deviation: <strong style="color: {border_color}; font-size: 1.15rem;">{dev_pct:+.1f}%</strong></div>
-                <div>Residual Z-Score: <strong style="color: {border_color}; font-size: 1.15rem;">{z_score:+.2f}σ</strong></div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid {border_color}33; font-family: 'JetBrains Mono', monospace;">
+                <div>
+                    <div style="font-size: 0.68rem; color: #64748B;">OBSERVED DEMAND</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #F1F5F9;">{actual_e:.1f} <span style="font-size: 0.75rem; color: #64748B;">kWh</span></div>
+                </div>
+                <div>
+                    <div style="font-size: 0.68rem; color: #64748B;">MODEL BASELINE</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #C8A252;">{expected_e:.1f} <span style="font-size: 0.75rem; color: #64748B;">kWh</span></div>
+                </div>
+                <div>
+                    <div style="font-size: 0.68rem; color: #64748B;">EXCEEDANCE DELTA</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{dev_pct:+.1f}% <span style="font-size: 0.75rem; color: #64748B;">({residual:+.1f} kWh)</span></div>
+                </div>
+                <div>
+                    <div style="font-size: 0.68rem; color: #64748B;">RESIDUAL Z-SCORE</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{z_score:+.2f}σ</div>
+                </div>
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # =========================================================================
-    # 📈 TIMELINE VISUALIZATION (RED FOR ANOMALY, GREEN FOR NORMAL)
-    # =========================================================================
-    st.markdown("#### 📊 Anomaly Timeline Overview")
-    st.caption("Points in 🔴 red indicate classified anomalies; 🟢 green points indicate normal operating periods. Gold indicator marks current scrubbed position.")
-
-    # Downsample for responsive Plotly rendering if dataset is large
-    step = max(1, len(df_chiller) // 1000)
-    plot_df = df_chiller.iloc[::step].copy()
-
-    fig = go.Figure()
-
-    # Normal points trace (Green)
-    normal_sub = plot_df[~plot_df["timestamp"].isin(df_chiller.loc[is_anomaly_mask, "timestamp"])]
-    fig.add_trace(
-        go.Scatter(
-            x=normal_sub["timestamp"],
-            y=normal_sub[energy_col],
-            mode="lines+markers",
-            name="Normal (Nominal)",
-            line=dict(color="#10B981", width=1.5),
-            marker=dict(size=4, color="#10B981"),
-            hovertemplate="<b>Normal</b><br>Time: %{x}<br>Energy: %{y:.1f} kWh<extra></extra>"
-        )
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">INCIDENT HIGH-RESOLUTION FOCUS TRACE</span>
+            <span class="section-sub">LOCAL WINDOW: +/-16 PERIODS (16-HOUR APERTURE)</span>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-    # Anomaly points trace (Red)
-    anomaly_sub = plot_df[plot_df["timestamp"].isin(df_chiller.loc[is_anomaly_mask, "timestamp"])]
-    if not anomaly_sub.empty:
-        fig.add_trace(
+    w_start = max(0, selected_idx - 16)
+    w_end = min(total_len, selected_idx + 17)
+    focus_df = df_chiller.iloc[w_start:w_end].copy()
+
+    fig_focus = go.Figure()
+
+    if "expected_energy" in focus_df.columns:
+        fig_focus.add_trace(
             go.Scatter(
-                x=anomaly_sub["timestamp"],
-                y=anomaly_sub[energy_col],
-                mode="markers",
-                name="Anomaly (Deviant)",
-                marker=dict(size=7, color="#EF4444", symbol="circle"),
-                hovertemplate="<b>🚨 ANOMALY</b><br>Time: %{x}<br>Energy: %{y:.1f} kWh<extra></extra>"
+                x=focus_df["timestamp"],
+                y=focus_df["expected_energy"],
+                name="MODEL BASELINE",
+                line=dict(color="#C8A252", width=1.5, dash="dash"),
+                hovertemplate="<b>BASELINE:</b> %{y:.1f} kWh<extra></extra>"
             )
         )
 
-    # Current scrubbed timestamp vertical indicator in gold
-    current_time_str = str(row["timestamp"])
-    fig.add_vline(
-        x=current_time_str,
-        line_width=2,
-        line_dash="solid",
-        line_color="#D4AF37",
-        annotation_text="📍 Selected Reading",
+    focus_normal = focus_df[~focus_df.index.isin(anomaly_indices)]
+    if not focus_normal.empty:
+        fig_focus.add_trace(
+            go.Scatter(
+                x=focus_normal["timestamp"],
+                y=focus_normal[energy_col],
+                mode="lines+markers",
+                name="NOMINAL STATE",
+                line=dict(color="#10B981", width=1.5),
+                marker=dict(size=5, color="#10B981"),
+                hovertemplate="<b>NOMINAL</b><br>TIME: %{x}<br>DEMAND: %{y:.1f} kWh<extra></extra>"
+            )
+        )
+
+    focus_anom = focus_df[focus_df.index.isin(anomaly_indices)]
+    if not focus_anom.empty:
+        fig_focus.add_trace(
+            go.Scatter(
+                x=focus_anom["timestamp"],
+                y=focus_anom[energy_col],
+                mode="markers",
+                name="ANOMALOUS EVENT",
+                marker=dict(size=9, color="#EF4444", symbol="circle", line=dict(color="#FFFFFF", width=1)),
+                hovertemplate="<b>ANOMALOUS</b><br>TIME: %{x}<br>DEMAND: %{y:.1f} kWh<extra></extra>"
+            )
+        )
+
+    current_ts = str(row["timestamp"])
+    fig_focus.add_vline(
+        x=current_ts,
+        line_width=1.5,
+        line_dash="dot",
+        line_color="#C8A252",
+        annotation_text="[INSPECTION CURSOR]",
         annotation_position="top left",
-        annotation_font_color="#D4AF37"
+        annotation_font=dict(family="JetBrains Mono, monospace", size=10, color="#C8A252")
     )
 
-    fig.update_layout(
+    fig_focus.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#111622",
-        plot_bgcolor="#0A0D14",
-        margin=dict(l=40, r=40, t=30, b=40),
-        height=320,
+        paper_bgcolor="#0D111A",
+        plot_bgcolor="#080A0F",
+        margin=dict(l=40, r=30, t=25, b=35),
+        height=300,
+        font=dict(family="JetBrains Mono, monospace", size=11, color="#94A3B8"),
         hovermode="closest",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        xaxis=dict(title="Timestamp", gridcolor="#1C2331", showgrid=True),
-        yaxis=dict(title="Energy Consumption (kWh)", gridcolor="#1C2331", showgrid=True)
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
+        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True),
+        yaxis=dict(title="ENERGY (kWh)", gridcolor="#141A26", linecolor="#1E2638", showgrid=True)
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_focus, use_container_width=True)
 
-    # =========================================================================
-    # 🌡️ SENSOR CONTEXT AT CURRENT TIMESTAMP
-    # =========================================================================
-    st.markdown("#### 🔬 Operating Conditions at Selected Timestamp")
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">FLEET-WIDE INCIDENT CHRONOLOGY OVERVIEW</span>
+            <span class="section-sub">COMPLETE DATASET TIMELINE // RED POINTS = ANOMALIES</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    step = max(1, len(df_chiller) // 1200)
+    bg_df = df_chiller.iloc[::step].copy()
+
+    fig_full = go.Figure()
+
+    fig_full.add_trace(
+        go.Scatter(
+            x=bg_df["timestamp"],
+            y=bg_df[energy_col],
+            mode="lines",
+            name="OBSERVED PROFILE",
+            line=dict(color="#334155", width=1),
+            hoverinfo="skip"
+        )
+    )
+
+    if total_anomalies > 0:
+        anom_full_df = df_chiller.iloc[anomaly_indices]
+        fig_full.add_trace(
+            go.Scatter(
+                x=anom_full_df["timestamp"],
+                y=anom_full_df[energy_col],
+                mode="markers",
+                name="ANOMALOUS INCIDENTS",
+                marker=dict(size=4, color="#EF4444"),
+                hovertemplate="<b>INCIDENT</b><br>TIME: %{x}<br>DEMAND: %{y:.1f} kWh<extra></extra>"
+            )
+        )
+
+    fig_full.add_vline(
+        x=current_ts,
+        line_width=1.5,
+        line_dash="solid",
+        line_color="#C8A252"
+    )
+
+    fig_full.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#0D111A",
+        plot_bgcolor="#080A0F",
+        margin=dict(l=40, r=30, t=20, b=35),
+        height=220,
+        font=dict(family="JetBrains Mono, monospace", size=10, color="#94A3B8"),
+        hovermode="closest",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
+        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True),
+        yaxis=dict(title="ENERGY (kWh)", gridcolor="#141A26", linecolor="#1E2638", showgrid=True)
+    )
+
+    st.plotly_chart(fig_full, use_container_width=True)
+
+    st.markdown(
+        """
+        <div class="section-header">
+            <span class="section-title">THERMODYNAMIC SENSOR TELEMETRY AT CURSOR</span>
+            <span class="section-sub">SIMULTANEOUS SENSOR MEASUREMENTS AT TIMELOCKED INTERVAL</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Cooling Water Temp", f"{row.get('Cooling Water Temperature (C)', 0.0):.1f} °C")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">COOLING WATER TEMP</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Cooling Water Temperature (C)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">°C</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c2:
-        st.metric("Chilled Water Rate", f"{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} L/s")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">CHILLED WATER RATE</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">L/s</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c3:
-        st.metric("Building Load", f"{row.get('Building Load (RT)', 0.0):.1f} RT")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">BUILDING LOAD</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem; color: #C8A252;">{row.get('Building Load (RT)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">RT</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c4:
-        st.metric("Outside Temp", f"{row.get('Outside Temperature (F)', 0.0):.1f} °F")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">OUTSIDE TEMP</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Outside Temperature (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">°F</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     c5, c6, c7, c8 = st.columns(4)
     with c5:
-        st.metric("Humidity", f"{row.get('Humidity (%)', 0.0):.1f} %")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">RELATIVE HUMIDITY</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Humidity (%)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">%</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c6:
-        st.metric("Dew Point", f"{row.get('Dew Point (F)', 0.0):.1f} °F")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">DEW POINT</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Dew Point (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">°F</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c7:
-        st.metric("Wind Speed", f"{row.get('Wind Speed (mph)', 0.0):.1f} mph")
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">WIND SPEED</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Wind Speed (mph)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">mph</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with c8:
-        st.metric("Atmospheric Pressure", f"{row.get('Pressure (in)', 0.0):.2f} in")
-
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+                <div class="metric-panel-header">ATM PRESSURE</div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Pressure (in)', 0.0):.2f} <span style="font-size: 0.75rem; color: #64748B;">in</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
