@@ -7,46 +7,49 @@ from dashboard.data_loader import get_context_variables
 
 
 def get_status_style(status_str: str) -> Dict[str, str]:
+    """
+    Industrial status styling with low color saturation.
+    """
     st_upper = str(status_str).upper()
     if st_upper in ["PRIORITY", "CRITICAL"]:
         return {
             "tag": "[CRITICAL]",
             "label": "CRITICAL",
-            "color": "#F43F5E",
-            "bg": "rgba(244, 63, 94, 0.10)",
-            "border": "#7F1D1D"
+            "color": "#B85450",  # Muted brick red
+            "bg": "rgba(184, 84, 80, 0.08)",
+            "border": "#5C2624"
         }
     elif st_upper in ["INVESTIGATE", "HIGH"]:
         return {
             "tag": "[INVESTIGATE]",
             "label": "INVESTIGATE",
-            "color": "#EF4444",
-            "bg": "rgba(239, 68, 68, 0.10)",
-            "border": "#991B1B"
+            "color": "#B85450",  # Muted brick red
+            "bg": "rgba(184, 84, 80, 0.08)",
+            "border": "#6E2E2C"
         }
     elif st_upper in ["WATCH", "WARNING", "MEDIUM"]:
         return {
             "tag": "[WATCH]",
             "label": "WATCH",
-            "color": "#E5B842",
-            "bg": "rgba(229, 184, 66, 0.10)",
-            "border": "#854D0E"
+            "color": "#B89248",  # Muted warm ochre
+            "bg": "rgba(184, 146, 72, 0.08)",
+            "border": "#5A441E"
         }
     elif st_upper in ["NORMAL", "NOMINAL"]:
         return {
             "tag": "[NOMINAL]",
             "label": "NOMINAL",
-            "color": "#10B981",
-            "bg": "rgba(16, 185, 129, 0.10)",
-            "border": "#064E3B"
+            "color": "#4E9A76",  # Muted sage green
+            "bg": "rgba(78, 154, 118, 0.08)",
+            "border": "#1E4733"
         }
     else:
         return {
             "tag": f"[{st_upper}]",
             "label": st_upper,
-            "color": "#94A3B8",
-            "bg": "rgba(148, 163, 184, 0.08)",
-            "border": "#334155"
+            "color": "#7E8899",
+            "bg": "rgba(126, 136, 153, 0.06)",
+            "border": "#283142"
         }
 
 
@@ -72,8 +75,8 @@ def inject_custom_css():
         }
 
         .stApp {
-            background-color: #080A0F;
-            color: #FAF6EE;
+            background-color: #090B0E;
+            color: #D8DCE4;
         }
 
         .telemetry-mono {
@@ -81,9 +84,10 @@ def inject_custom_css():
             font-feature-settings: "tnum" 1;
         }
 
+        /* Muted industrial metric panels */
         .metric-panel {
-            background: #0D111A;
-            border: 1px solid rgba(212, 175, 55, 0.2);
+            background: #0E1218;
+            border: 1px solid rgba(191, 161, 95, 0.16);
             border-radius: 4px;
             padding: 14px 16px;
             margin-bottom: 10px;
@@ -93,7 +97,7 @@ def inject_custom_css():
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.72rem;
             font-weight: 600;
-            color: #8E8A82;
+            color: #7A8494;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 6px;
@@ -103,7 +107,7 @@ def inject_custom_css():
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.65rem;
             font-weight: 700;
-            color: #FAF6EE;
+            color: #E2E6EE;
             font-feature-settings: "tnum" 1;
             line-height: 1.15;
         }
@@ -111,13 +115,13 @@ def inject_custom_css():
         .metric-panel-sub {
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.74rem;
-            color: #8E8A82;
+            color: #7A8494;
             margin-top: 6px;
         }
 
         .asset-card {
-            background: #0D111A;
-            border: 1px solid rgba(212, 175, 55, 0.22);
+            background: #0E1218;
+            border: 1px solid rgba(191, 161, 95, 0.18);
             border-radius: 4px;
             padding: 16px;
             margin-bottom: 10px;
@@ -125,9 +129,9 @@ def inject_custom_css():
         }
 
         .asset-card-active {
-            background: #111726 !important;
-            border: 2px solid #D4AF37 !important;
-            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22) !important;
+            background: #111622 !important;
+            border: 2px solid #BFA15F !important;
+            box-shadow: 0 0 16px rgba(191, 161, 95, 0.14) !important;
         }
 
         .status-tag {
@@ -145,7 +149,7 @@ def inject_custom_css():
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            border-bottom: 1px solid rgba(191, 161, 95, 0.16);
             padding-bottom: 6px;
             margin-bottom: 14px;
         }
@@ -154,21 +158,21 @@ def inject_custom_css():
             font-family: 'Cinzel', serif;
             font-size: 0.96rem;
             font-weight: 700;
-            color: #FAF6EE;
+            color: #E2E6EE;
             letter-spacing: 0.06em;
         }
 
         .section-sub {
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.72rem;
-            color: #8E8A82;
+            color: #7A8494;
             letter-spacing: 0.04em;
         }
 
-        /* Streamlit Tab styling */
+        /* Streamlit Tab styling with muted champagne gold */
         .stTabs [data-baseweb="tab-list"] {
             gap: 6px;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+            border-bottom: 1px solid rgba(191, 161, 95, 0.18);
             background: transparent;
         }
 
@@ -176,7 +180,7 @@ def inject_custom_css():
             font-family: 'Cinzel', serif;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #8E8A82;
+            color: #7A8494;
             border-radius: 4px 4px 0 0;
             padding: 10px 20px;
             background: transparent;
@@ -185,10 +189,10 @@ def inject_custom_css():
         }
 
         .stTabs [aria-selected="true"] {
-            color: #D4AF37 !important;
-            border: 1px solid rgba(212, 175, 55, 0.3) !important;
-            border-bottom: 2px solid #D4AF37 !important;
-            background: #0D111A !important;
+            color: #BFA15F !important;
+            border: 1px solid rgba(191, 161, 95, 0.25) !important;
+            border-bottom: 2px solid #BFA15F !important;
+            background: #0E1218 !important;
         }
 
         /* Button Styling */
@@ -196,9 +200,9 @@ def inject_custom_css():
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.78rem;
             font-weight: 600;
-            background: #0D111A;
-            color: #FAF6EE;
-            border: 1px solid rgba(212, 175, 55, 0.25);
+            background: #0E1218;
+            color: #D8DCE4;
+            border: 1px solid rgba(191, 161, 95, 0.2);
             border-radius: 3px;
             padding: 8px 16px;
             letter-spacing: 0.04em;
@@ -206,32 +210,32 @@ def inject_custom_css():
         }
 
         .stButton > button:hover {
-            border-color: #D4AF37;
-            color: #D4AF37;
-            background: #141B29;
+            border-color: #BFA15F;
+            color: #BFA15F;
+            background: #141A24;
         }
 
         /* Primary Button (Active state) */
         .stButton > button[kind="primary"], .stButton > button[data-testid="baseButton-primary"] {
-            background: #D4AF37 !important;
-            color: #080A0F !important;
-            border: 1px solid #D4AF37 !important;
+            background: #BFA15F !important;
+            color: #090B0E !important;
+            border: 1px solid #BFA15F !important;
             font-weight: 700 !important;
         }
 
         div[data-baseweb="select"] > div {
-            background-color: #0D111A !important;
-            border: 1px solid rgba(212, 175, 55, 0.25) !important;
+            background-color: #0E1218 !important;
+            border: 1px solid rgba(191, 161, 95, 0.2) !important;
             border-radius: 3px !important;
-            color: #FAF6EE !important;
+            color: #D8DCE4 !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
             font-size: 0.82rem !important;
         }
 
         div[data-baseweb="input"] input {
-            background-color: #0D111A !important;
+            background-color: #0E1218 !important;
             border-radius: 3px !important;
-            color: #FAF6EE !important;
+            color: #D8DCE4 !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
             font-size: 0.82rem !important;
         }
@@ -240,17 +244,17 @@ def inject_custom_css():
             display: flex;
             justify-content: space-between;
             padding: 5px 0;
-            border-bottom: 1px solid #161D2B;
+            border-bottom: 1px solid #151A24;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.76rem;
         }
 
         .telemetry-row-label {
-            color: #8E8A82;
+            color: #7A8494;
         }
 
         .telemetry-row-val {
-            color: #FAF6EE;
+            color: #D8DCE4;
             font-weight: 600;
         }
         </style>
@@ -262,11 +266,11 @@ def inject_custom_css():
 def render_chiller_selector_cards(fleet_stats: List[Dict[str, Any]], active_chiller: str) -> str:
     st.markdown(
         """
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 6px;">
-            <span style="font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 700; color: #FAF6EE; letter-spacing: 0.08em;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; border-bottom: 1px solid rgba(191, 161, 95, 0.16); padding-bottom: 6px;">
+            <span style="font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 700; color: #E2E6EE; letter-spacing: 0.08em;">
                 FLEET ASSET DIRECTORY
             </span>
-            <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.74rem; color: #8E8A82;">
+            <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.74rem; color: #7A8494;">
                 CLICK ASSET CARD TO REVEAL TELEMETRY & DIAGNOSTICS
             </span>
         </div>
@@ -291,16 +295,16 @@ def render_chiller_selector_cards(fleet_stats: List[Dict[str, Any]], active_chil
         dev = item.get("current_deviation_pct")
 
         dev_str = f"+{dev:.1f}%" if dev is not None else "NOMINAL"
-        dev_color = style["color"] if (dev is not None and dev > 5.0) else "#10B981"
+        dev_color = style["color"] if (dev is not None and dev > 5.0) else "#4E9A76"
 
         card_class = "asset-card asset-card-active" if is_active else "asset-card"
-        border_top = "border-top: 3px solid #D4AF37;" if is_active else f"border-top: 3px solid {style['color']};"
+        border_top = "border-top: 3px solid #BFA15F;" if is_active else f"border-top: 3px solid {style['color']};"
 
         with cols[idx]:
             indicator_html = (
-                '<div style="font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 0.70rem; font-weight: 700; color: #D4AF37; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">● CURRENTLY ACTIVE</div>'
+                '<div style="font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 0.70rem; font-weight: 700; color: #BFA15F; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">● CURRENTLY ACTIVE</div>'
                 if is_active else
-                '<div style="font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 0.70rem; color: #8E8A82; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">MONITORED CHILLER</div>'
+                '<div style="font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 0.70rem; color: #7A8494; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">MONITORED CHILLER</div>'
             )
 
             st.markdown(
@@ -308,7 +312,7 @@ def render_chiller_selector_cards(fleet_stats: List[Dict[str, Any]], active_chil
                 <div class="{card_class}" style="{border_top} margin-bottom: 8px;">
                     {indicator_html}
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-family: 'Cinzel', serif; font-size: 1.30rem; font-weight: 700; color: {'#D4AF37' if is_active else '#FAF6EE'};">
+                        <span style="font-family: 'Cinzel', serif; font-size: 1.30rem; font-weight: 700; color: {'#BFA15F' if is_active else '#E2E6EE'};">
                             {cid}
                         </span>
                         <span class="status-tag" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']};">
@@ -321,7 +325,7 @@ def render_chiller_selector_cards(fleet_stats: List[Dict[str, Any]], active_chil
                     </div>
                     <div class="telemetry-row">
                         <span class="telemetry-row-label">MEAN POWER</span>
-                        <span class="telemetry-row-val" style="color: #D4AF37;">{avg_e:.1f} kWh</span>
+                        <span class="telemetry-row-val" style="color: #BFA15F;">{avg_e:.1f} kWh</span>
                     </div>
                     <div class="telemetry-row">
                         <span class="telemetry-row-label">PEAK DEMAND</span>
@@ -362,7 +366,7 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">MONITORED ASSETS</div>
-                <div class="metric-panel-val" style="color: #D4AF37;">{metrics['total_chillers']}</div>
+                <div class="metric-panel-val" style="color: #BFA15F;">{metrics['total_chillers']}</div>
                 <div class="metric-panel-sub">Active Telemetry Units</div>
             </div>
             """,
@@ -384,7 +388,7 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">OBSERVATION WINDOW</div>
-                <div class="metric-panel-val" style="font-size: 1.15rem; margin-top: 4px; color: #FAF6EE;">
+                <div class="metric-panel-val" style="font-size: 1.15rem; margin-top: 4px; color: #E2E6EE;">
                     {metrics['date_min'][:10]}
                 </div>
                 <div class="metric-panel-sub">TO {metrics['date_max'][:10]}</div>
@@ -394,7 +398,7 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
         )
     with c4:
         has_ml = any(c.get("has_ml", False) for c in metrics.get("chiller_stats", []))
-        status_color = "#10B981" if has_ml else "#E5B842"
+        status_color = "#4E9A76" if has_ml else "#B89248"
         status_text = "[ACTIVE: MODEL CALIBRATED]" if has_ml else "[STANDBY: PENDING ML]"
         st.markdown(
             f"""
@@ -430,7 +434,7 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
     if not filtered:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
+            <div style="padding: 16px; background: #0E1218; border: 1px solid rgba(191, 161, 95, 0.16); font-size: 0.80rem; color: #7A8494;">
                 [INFO] No equipment matched the search query.
             </div>
             """,
@@ -449,14 +453,14 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
         dev = item.get("current_deviation_pct")
 
         dev_str = f"+{dev:.1f}%" if dev is not None else "NOMINAL"
-        dev_color = style["color"] if (dev is not None and dev > 5.0) else "#10B981"
+        dev_color = style["color"] if (dev is not None and dev > 5.0) else "#4E9A76"
 
         with cols[idx % len(cols)]:
             st.markdown(
                 f"""
                 <div class="asset-card" style="border-left: 3px solid {style['color']};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-family: 'Cinzel', serif; font-size: 1.25rem; font-weight: 700; color: #FAF6EE;">
+                        <span style="font-family: 'Cinzel', serif; font-size: 1.25rem; font-weight: 700; color: #E2E6EE;">
                             {cid}
                         </span>
                         <span class="status-tag" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']};">
@@ -469,7 +473,7 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
                     </div>
                     <div class="telemetry-row">
                         <span class="telemetry-row-label">MEAN POWER</span>
-                        <span class="telemetry-row-val" style="color: #D4AF37;">{avg_e:.1f} kWh</span>
+                        <span class="telemetry-row-val" style="color: #BFA15F;">{avg_e:.1f} kWh</span>
                     </div>
                     <div class="telemetry-row">
                         <span class="telemetry-row-label">PEAK DEMAND</span>
@@ -512,7 +516,7 @@ def render_actual_energy_chart(df_chiller: pd.DataFrame, expected_series: Option
             x=df_chiller["timestamp"],
             y=df_chiller[energy_col],
             name="OBSERVED DEMAND",
-            line=dict(color="#FAF6EE", width=1.5),
+            line=dict(color="#C8CCD8", width=1.5),
             hovertemplate="<b>TIMESTAMP:</b> %{x}<br><b>OBSERVED:</b> %{y:.1f} kWh<extra></extra>"
         )
     )
@@ -523,22 +527,22 @@ def render_actual_energy_chart(df_chiller: pd.DataFrame, expected_series: Option
                 x=df_chiller["timestamp"],
                 y=expected_series.reindex(df_chiller["timestamp"]).values,
                 name="MODEL BASELINE",
-                line=dict(color="#D4AF37", width=1.5, dash="dash"),
+                line=dict(color="#BFA15F", width=1.5, dash="dash"),
                 hovertemplate="<b>TIMESTAMP:</b> %{x}<br><b>BASELINE:</b> %{y:.1f} kWh<extra></extra>"
             )
         )
 
     fig.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#0D111A",
-        plot_bgcolor="#080A0F",
+        paper_bgcolor="#0E1218",
+        plot_bgcolor="#090B0E",
         margin=dict(l=40, r=30, t=25, b=35),
         height=380,
         hovermode="x unified",
-        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#8E8A82"),
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#7A8494"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
-        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True, zeroline=False),
-        yaxis=dict(title="POWER CONSUMPTION (kWh)", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True, zeroline=False)
+        xaxis=dict(title="", gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True, zeroline=False),
+        yaxis=dict(title="POWER CONSUMPTION (kWh)", gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True, zeroline=False)
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -571,7 +575,7 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
                 f"""
                 <div class="metric-panel">
                     <div class="metric-panel-header">{col_name}</div>
-                    <div class="metric-panel-val" style="color: #D4AF37; font-size: 1.35rem;">
+                    <div class="metric-panel-val" style="color: #BFA15F; font-size: 1.35rem;">
                         {mean_val:.1f}
                     </div>
                     <div class="metric-panel-sub">
@@ -584,7 +588,7 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
 
     st.markdown(
         """
-        <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.74rem; font-weight: 600; color: #8E8A82; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase;">
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.74rem; font-weight: 600; color: #7A8494; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase;">
             INTERACTIVE CONTEXT PARAMETER TRACE
         </div>
         """,
@@ -604,20 +608,20 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
             x=df_chiller["timestamp"],
             y=df_chiller[selected_var],
             name=selected_var.upper(),
-            line=dict(color="#D4AF37", width=1.5),
+            line=dict(color="#BFA15F", width=1.5),
             hovertemplate=f"<b>TIMESTAMP:</b> %{{x}}<br><b>{selected_var}:</b> %{{y:.2f}}<extra></extra>"
         )
     )
     
     fig.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#0D111A",
-        plot_bgcolor="#080A0F",
+        paper_bgcolor="#0E1218",
+        plot_bgcolor="#090B0E",
         margin=dict(l=40, r=30, t=20, b=35),
         height=280,
-        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#8E8A82"),
-        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True),
-        yaxis=dict(title=selected_var.upper(), gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True)
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#7A8494"),
+        xaxis=dict(title="", gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True),
+        yaxis=dict(title=selected_var.upper(), gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True)
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -637,7 +641,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
     if not anomaly_data or "expected_energy" not in anomaly_data:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
+            <div style="padding: 16px; background: #0E1218; border: 1px solid rgba(191, 161, 95, 0.16); font-size: 0.80rem; color: #7A8494;">
                 [INFO] Baseline model output pending ML pipeline calibration.
             </div>
             """,
@@ -656,7 +660,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">ACTUAL DEMAND (OBSERVED)</div>
-                <div class="metric-panel-val">{actual:.1f} <span style="font-size: 0.9rem; color: #8E8A82;">kWh</span></div>
+                <div class="metric-panel-val">{actual:.1f} <span style="font-size: 0.9rem; color: #7A8494;">kWh</span></div>
                 <div class="metric-panel-sub">PREVAILING READING</div>
             </div>
             """,
@@ -667,7 +671,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">MODEL BASELINE (EXPECTED)</div>
-                <div class="metric-panel-val" style="color: #D4AF37;">{expected:.1f} <span style="font-size: 0.9rem; color: #8E8A82;">kWh</span></div>
+                <div class="metric-panel-val" style="color: #BFA15F;">{expected:.1f} <span style="font-size: 0.9rem; color: #7A8494;">kWh</span></div>
                 <div class="metric-panel-sub">EMPIRICAL TARGET</div>
             </div>
             """,
@@ -678,7 +682,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">CONTEXTUAL EXCEEDANCE</div>
-                <div class="metric-panel-val" style="color: #EF4444;">+{dev_pct:.1f}%</div>
+                <div class="metric-panel-val" style="color: #B85450;">+{dev_pct:.1f}%</div>
                 <div class="metric-panel-sub">DELTA: +{residual:.1f} kWh</div>
             </div>
             """,
@@ -687,10 +691,10 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
 
     st.markdown(
         f"""
-        <div style="background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.25); border-left: 3px solid #D4AF37; padding: 12px 16px; margin-top: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.84rem; color: #FAF6EE; line-height: 1.6;">
-            <div style="font-family: 'Cinzel', serif; font-weight: 700; color: #D4AF37; margin-bottom: 4px;">DIAGNOSTIC TELEMETRY LOG</div>
-            <div style="color: #EDE8DE;">
-                Observed energy demand is <strong style="color: #D4AF37;">+{dev_pct:.1f}% higher than expected</strong> for the measured thermodynamic operating conditions (ambient wet-bulb, water flow rates, and building RT load).
+        <div style="background: #0E1218; border: 1px solid rgba(191, 161, 95, 0.18); border-left: 3px solid #BFA15F; padding: 12px 16px; margin-top: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.84rem; color: #D8DCE4; line-height: 1.6;">
+            <div style="font-family: 'Cinzel', serif; font-weight: 700; color: #BFA15F; margin-bottom: 4px;">DIAGNOSTIC TELEMETRY LOG</div>
+            <div style="color: #C8CCD8;">
+                Observed energy demand is <strong style="color: #BFA15F;">+{dev_pct:.1f}% higher than expected</strong> for the measured thermodynamic operating conditions (ambient wet-bulb, water flow rates, and building RT load).
             </div>
         </div>
         """,
@@ -712,7 +716,7 @@ def render_persistence_analysis(anomaly_data: Optional[Dict[str, Any]]):
     if not anomaly_data:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
+            <div style="padding: 16px; background: #0E1218; border: 1px solid rgba(191, 161, 95, 0.16); font-size: 0.80rem; color: #7A8494;">
                 [INFO] Persistence evaluation pending ML anomaly results.
             </div>
             """,
@@ -738,18 +742,18 @@ def render_persistence_analysis(anomaly_data: Optional[Dict[str, Any]]):
                 </div>
                 <div>
                     <div class="metric-panel-header">PERSISTENT SEQUENCE</div>
-                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #FAF6EE; margin-top: 2px;">
-                        {consec} <span style="font-size: 0.80rem; color: #8E8A82;">READINGS ({duration_min} MIN)</span>
+                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #E2E6EE; margin-top: 2px;">
+                        {consec} <span style="font-size: 0.80rem; color: #7A8494;">READINGS ({duration_min} MIN)</span>
                     </div>
                 </div>
                 <div>
                     <div class="metric-panel-header">DEVIATION TRAJECTORY</div>
-                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #D4AF37; margin-top: 2px;">
+                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #BFA15F; margin-top: 2px;">
                         {trend}
                     </div>
                 </div>
             </div>
-            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(212, 175, 55, 0.15); font-size: 0.74rem; color: #8E8A82;">
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(191, 161, 95, 0.14); font-size: 0.74rem; color: #7A8494;">
                 FILTER CRITERIA: Transient single-period spikes filtered. Persistent state confirmed after >=3 consecutive periods beyond 2.5 sigma threshold.
             </div>
         </div>
@@ -772,7 +776,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     if not anomaly_data:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
+            <div style="padding: 16px; background: #0E1218; border: 1px solid rgba(191, 161, 95, 0.16); font-size: 0.80rem; color: #7A8494;">
                 [INFO] Investigation report will display once ML anomaly evaluation is generated.
             </div>
             """,
@@ -787,10 +791,10 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     st.markdown(
         f"""
         <div class="asset-card">
-            <div style="font-family: 'Cinzel', serif; font-size: 0.88rem; color: #D4AF37; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
+            <div style="font-family: 'Cinzel', serif; font-size: 0.88rem; color: #BFA15F; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
                 ATTRIBUTION SUMMARY
             </div>
-            <div style="font-size: 0.88rem; color: #EDE8DE; line-height: 1.6; margin-bottom: 14px;">
+            <div style="font-size: 0.88rem; color: #D8DCE4; line-height: 1.6; margin-bottom: 14px;">
                 {summary}
             </div>
         """,
@@ -800,7 +804,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     if context_changes:
         st.markdown(
             """
-            <div style="font-size: 0.72rem; font-weight: 600; color: #8E8A82; text-transform: uppercase; margin-bottom: 8px;">
+            <div style="font-size: 0.72rem; font-weight: 600; color: #7A8494; text-transform: uppercase; margin-bottom: 8px;">
                 OBSERVED CONTEXTUAL PARAMETER DRIFT
             </div>
             """,
@@ -814,7 +818,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
                 f"""
                 <div class="telemetry-row" style="padding: 4px 0;">
                     <span class="telemetry-row-label">{var_name}</span>
-                    <span class="telemetry-row-val" style="color: {'#EF4444' if abs(pct) > 10 else '#D4AF37'};">
+                    <span class="telemetry-row-val" style="color: {'#B85450' if abs(pct) > 10 else '#BFA15F'};">
                         {direction} ({pct:+.1f}%)
                     </span>
                 </div>
@@ -824,7 +828,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
 
     st.markdown(
         """
-        <div style="font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 700; color: #FAF6EE; text-transform: uppercase; margin-top: 14px; margin-bottom: 8px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 700; color: #E2E6EE; text-transform: uppercase; margin-top: 14px; margin-bottom: 8px;">
             RECOMMENDED ENGINEERING ACTIONS
         </div>
         """,
@@ -834,8 +838,8 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     for idx, rec in enumerate(recommendations, 1):
         st.markdown(
             f"""
-            <div style="background: #080A0F; border: 1px solid rgba(212, 175, 55, 0.2); border-left: 3px solid #D4AF37; padding: 10px 14px; margin-bottom: 8px; font-size: 0.82rem; color: #EDE8DE; display: flex; gap: 10px;">
-                <span style="color: #D4AF37; font-weight: 700;">[ACTION {idx:02d}]</span>
+            <div style="background: #090B0E; border: 1px solid rgba(191, 161, 95, 0.16); border-left: 3px solid #BFA15F; padding: 10px 14px; margin-bottom: 8px; font-size: 0.82rem; color: #D8DCE4; display: flex; gap: 10px;">
+                <span style="color: #BFA15F; font-weight: 700;">[ACTION {idx:02d}]</span>
                 <span>{rec}</span>
             </div>
             """,
@@ -846,6 +850,10 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
 
 
 def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
+    """
+    Chronological replay and operational classifier view.
+    Properly handles both Normal events (highlighted green) and Anomalous events (highlighted red).
+    """
     st.markdown(
         f"""
         <div class="section-header">
@@ -871,24 +879,32 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         is_anomaly_mask = pd.Series([False] * total_len)
 
     anomaly_indices = df_chiller.index[is_anomaly_mask].tolist()
+    normal_indices = df_chiller.index[~is_anomaly_mask].tolist()
     total_anomalies = len(anomaly_indices)
+    total_normals = len(normal_indices)
 
     # Master index state for this chiller
     cur_idx_key = f"cur_obs_idx_{chiller_id}"
+    anom_pos_key = f"anom_pos_{chiller_id}"
+    norm_pos_key = f"norm_pos_{chiller_id}"
+
     if cur_idx_key not in st.session_state:
-        st.session_state[cur_idx_key] = anomaly_indices[0] if anomaly_indices else 0
+        st.session_state[cur_idx_key] = 0
     st.session_state[cur_idx_key] = min(max(0, st.session_state[cur_idx_key]), total_len - 1)
 
-    # Anomaly position pointer
-    anom_pos_key = f"anom_pos_{chiller_id}"
     if anom_pos_key not in st.session_state:
         st.session_state[anom_pos_key] = 0
     if total_anomalies > 0:
         st.session_state[anom_pos_key] = min(max(0, st.session_state[anom_pos_key]), total_anomalies - 1)
 
-    mode_options = ["ALL OBSERVATIONS", "ANOMALOUS EVENTS ONLY"] if total_anomalies > 0 else ["ALL OBSERVATIONS"]
+    if norm_pos_key not in st.session_state:
+        st.session_state[norm_pos_key] = 0
+    if total_normals > 0:
+        st.session_state[norm_pos_key] = min(max(0, st.session_state[norm_pos_key]), total_normals - 1)
+
+    mode_options = ["ALL OBSERVATIONS", "NORMAL EVENTS ONLY", "ANOMALOUS EVENTS ONLY"]
     
-    col_mode, col_ctrl = st.columns([1.6, 3.4])
+    col_mode, col_ctrl = st.columns([1.8, 3.2])
     with col_mode:
         selected_mode = st.radio(
             "Navigation Scope:",
@@ -898,24 +914,119 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             label_visibility="collapsed"
         )
 
-    if selected_mode == "ANOMALOUS EVENTS ONLY" and total_anomalies > 0:
+    norm_widget_key = f"norm_select_{chiller_id}"
+    anom_widget_key = f"anom_select_{chiller_id}"
+    all_widget_key = f"sel_all_ts_{chiller_id}"
+
+    # Handle cross-mode synchronization
+    last_mode_key = f"last_nav_mode_{chiller_id}"
+    if last_mode_key in st.session_state and st.session_state[last_mode_key] != selected_mode:
+        curr_master = st.session_state.get(cur_idx_key, 0)
+        if selected_mode == "NORMAL EVENTS ONLY" and total_normals > 0:
+            if curr_master in normal_indices:
+                pos = normal_indices.index(curr_master)
+            else:
+                pos = min(range(total_normals), key=lambda i: abs(normal_indices[i] - curr_master))
+            st.session_state[norm_pos_key] = pos
+            st.session_state[norm_widget_key] = pos
+            st.session_state[cur_idx_key] = normal_indices[pos]
+        elif selected_mode == "ANOMALOUS EVENTS ONLY" and total_anomalies > 0:
+            if curr_master in anomaly_indices:
+                pos = anomaly_indices.index(curr_master)
+            else:
+                pos = min(range(total_anomalies), key=lambda i: abs(anomaly_indices[i] - curr_master))
+            st.session_state[anom_pos_key] = pos
+            st.session_state[anom_widget_key] = pos
+            st.session_state[cur_idx_key] = anomaly_indices[pos]
+        elif selected_mode == "ALL OBSERVATIONS":
+            st.session_state[all_widget_key] = st.session_state[cur_idx_key]
+        st.session_state[last_mode_key] = selected_mode
+    else:
+        st.session_state[last_mode_key] = selected_mode
+
+    # 1. NORMAL EVENTS ONLY MODE
+    if selected_mode == "NORMAL EVENTS ONLY" and total_normals > 0:
+        if norm_pos_key not in st.session_state or st.session_state[norm_pos_key] >= total_normals:
+            st.session_state[norm_pos_key] = 0
+        if norm_widget_key not in st.session_state or st.session_state[norm_widget_key] >= total_normals:
+            st.session_state[norm_widget_key] = st.session_state[norm_pos_key]
+
         with col_ctrl:
             c_prev, c_stat, c_next = st.columns([1, 2, 1])
             with c_prev:
-                if st.button("< PREV INCIDENT", key=f"btn_prev_{chiller_id}", use_container_width=True):
-                    st.session_state[anom_pos_key] = max(0, st.session_state[anom_pos_key] - 1)
-                    st.session_state[cur_idx_key] = anomaly_indices[st.session_state[anom_pos_key]]
+                if st.button("< PREV NORMAL", key=f"btn_norm_prev_{chiller_id}", use_container_width=True):
+                    new_pos = max(0, st.session_state[norm_pos_key] - 1)
+                    st.session_state[norm_pos_key] = new_pos
+                    st.session_state[norm_widget_key] = new_pos
+                    st.session_state[cur_idx_key] = normal_indices[new_pos]
                     st.rerun()
             with c_next:
-                if st.button("NEXT INCIDENT >", key=f"btn_next_{chiller_id}", use_container_width=True):
-                    st.session_state[anom_pos_key] = min(total_anomalies - 1, st.session_state[anom_pos_key] + 1)
-                    st.session_state[cur_idx_key] = anomaly_indices[st.session_state[anom_pos_key]]
+                if st.button("NEXT NORMAL >", key=f"btn_norm_next_{chiller_id}", use_container_width=True):
+                    new_pos = min(total_normals - 1, st.session_state[norm_pos_key] + 1)
+                    st.session_state[norm_pos_key] = new_pos
+                    st.session_state[norm_widget_key] = new_pos
+                    st.session_state[cur_idx_key] = normal_indices[new_pos]
                     st.rerun()
             with c_stat:
                 st.markdown(
                     f"""
-                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #D4AF37; font-weight: 700;">
-                        INCIDENT {st.session_state[anom_pos_key] + 1} OF {total_anomalies}
+                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #4E9A76; font-weight: 700;">
+                        NORMAL {st.session_state[norm_pos_key] + 1:,} OF {total_normals:,}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        def format_normal(i: int) -> str:
+            idx = normal_indices[i]
+            r = df_chiller.iloc[idx]
+            ts = str(r.get("timestamp", ""))
+            act = float(r.get(energy_col, 0.0))
+            dev = float(r.get("deviation_pct", 0.0)) if pd.notna(r.get("deviation_pct")) else 0.0
+            return f"NORMAL #{i+1:04d} // {ts} // {act:.1f} kWh // DEV: {dev:+.1f}%"
+
+        selected_norm_pos = st.selectbox(
+            "Jump to Normal Event Timestamp:",
+            options=list(range(total_normals)),
+            format_func=format_normal,
+            index=st.session_state[norm_pos_key],
+            key=norm_widget_key
+        )
+        if selected_norm_pos != st.session_state[norm_pos_key]:
+            st.session_state[norm_pos_key] = selected_norm_pos
+            st.session_state[cur_idx_key] = normal_indices[selected_norm_pos]
+            st.rerun()
+
+        selected_idx = normal_indices[st.session_state[norm_pos_key]]
+
+    # 2. ANOMALOUS EVENTS ONLY MODE
+    elif selected_mode == "ANOMALOUS EVENTS ONLY" and total_anomalies > 0:
+        if anom_pos_key not in st.session_state or st.session_state[anom_pos_key] >= total_anomalies:
+            st.session_state[anom_pos_key] = 0
+        if anom_widget_key not in st.session_state or st.session_state[anom_widget_key] >= total_anomalies:
+            st.session_state[anom_widget_key] = st.session_state[anom_pos_key]
+
+        with col_ctrl:
+            c_prev, c_stat, c_next = st.columns([1, 2, 1])
+            with c_prev:
+                if st.button("< PREV INCIDENT", key=f"btn_prev_{chiller_id}", use_container_width=True):
+                    new_pos = max(0, st.session_state[anom_pos_key] - 1)
+                    st.session_state[anom_pos_key] = new_pos
+                    st.session_state[anom_widget_key] = new_pos
+                    st.session_state[cur_idx_key] = anomaly_indices[new_pos]
+                    st.rerun()
+            with c_next:
+                if st.button("NEXT INCIDENT >", key=f"btn_next_{chiller_id}", use_container_width=True):
+                    new_pos = min(total_anomalies - 1, st.session_state[anom_pos_key] + 1)
+                    st.session_state[anom_pos_key] = new_pos
+                    st.session_state[anom_widget_key] = new_pos
+                    st.session_state[cur_idx_key] = anomaly_indices[new_pos]
+                    st.rerun()
+            with c_stat:
+                st.markdown(
+                    f"""
+                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #B85450; font-weight: 700;">
+                        ANOMALY {st.session_state[anom_pos_key] + 1} OF {total_anomalies}
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -935,7 +1046,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             options=list(range(total_anomalies)),
             format_func=format_anomaly,
             index=st.session_state[anom_pos_key],
-            key=f"anom_select_{chiller_id}"
+            key=anom_widget_key
         )
         if selected_incident_pos != st.session_state[anom_pos_key]:
             st.session_state[anom_pos_key] = selected_incident_pos
@@ -944,33 +1055,46 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
 
         selected_idx = anomaly_indices[st.session_state[anom_pos_key]]
 
+    # 3. ALL OBSERVATIONS MODE
     else:
-        # ALL OBSERVATIONS MODE
+        if cur_idx_key not in st.session_state or st.session_state[cur_idx_key] >= total_len:
+            st.session_state[cur_idx_key] = 0
+        if all_widget_key not in st.session_state or st.session_state[all_widget_key] >= total_len:
+            st.session_state[all_widget_key] = st.session_state[cur_idx_key]
+
         with col_ctrl:
             c_day_prev, c_prev, c_stat, c_next, c_day_next = st.columns([1, 1, 2.2, 1, 1])
             with c_day_prev:
                 if st.button("<< -1D", key=f"btn_dprev_{chiller_id}", use_container_width=True, help="Jump back 24 hours (48 intervals)"):
-                    st.session_state[cur_idx_key] = max(0, st.session_state[cur_idx_key] - 48)
+                    new_idx = max(0, st.session_state[cur_idx_key] - 48)
+                    st.session_state[cur_idx_key] = new_idx
+                    st.session_state[all_widget_key] = new_idx
                     st.rerun()
             with c_prev:
                 if st.button("< PREV", key=f"btn_all_prev_{chiller_id}", use_container_width=True, help="Previous 30-min reading"):
-                    st.session_state[cur_idx_key] = max(0, st.session_state[cur_idx_key] - 1)
+                    new_idx = max(0, st.session_state[cur_idx_key] - 1)
+                    st.session_state[cur_idx_key] = new_idx
+                    st.session_state[all_widget_key] = new_idx
                     st.rerun()
             with c_next:
                 if st.button("NEXT >", key=f"btn_all_next_{chiller_id}", use_container_width=True, help="Next 30-min reading"):
-                    st.session_state[cur_idx_key] = min(total_len - 1, st.session_state[cur_idx_key] + 1)
+                    new_idx = min(total_len - 1, st.session_state[cur_idx_key] + 1)
+                    st.session_state[cur_idx_key] = new_idx
+                    st.session_state[all_widget_key] = new_idx
                     st.rerun()
             with c_day_next:
                 if st.button("+1D >>", key=f"btn_dnext_{chiller_id}", use_container_width=True, help="Jump forward 24 hours (48 intervals)"):
-                    st.session_state[cur_idx_key] = min(total_len - 1, st.session_state[cur_idx_key] + 48)
+                    new_idx = min(total_len - 1, st.session_state[cur_idx_key] + 48)
+                    st.session_state[cur_idx_key] = new_idx
+                    st.session_state[all_widget_key] = new_idx
                     st.rerun()
             with c_stat:
                 curr_ts_disp = timestamps[st.session_state[cur_idx_key]]
                 st.markdown(
                     f"""
-                    <div style="text-align: center; padding-top: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; color: #D4AF37; font-weight: 700;">
+                    <div style="text-align: center; padding-top: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; color: #BFA15F; font-weight: 700;">
                         READING {st.session_state[cur_idx_key] + 1:,} OF {total_len:,}<br/>
-                        <span style="font-size: 0.68rem; color: #8E8A82;">{curr_ts_disp}</span>
+                        <span style="font-size: 0.68rem; color: #7A8494;">{curr_ts_disp}</span>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -984,34 +1108,20 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             dev = float(r.get("deviation_pct", 0.0)) if pd.notna(r.get("deviation_pct")) else 0.0
             return f"#{i+1:04d} // {ts} // {act:.1f} kWh // [{sev}] ({dev:+.1f}%)"
 
-        c_jump, c_slider = st.columns([1.8, 2.2])
-        with c_jump:
-            selected_all_ts = st.selectbox(
-                "Select / Search Observation Event Timestamp:",
-                options=list(range(total_len)),
-                format_func=format_all_reading,
-                index=st.session_state[cur_idx_key],
-                key=f"sel_all_ts_{chiller_id}"
-            )
-            if selected_all_ts != st.session_state[cur_idx_key]:
-                st.session_state[cur_idx_key] = selected_all_ts
-                st.rerun()
-
-        with c_slider:
-            current_reading_ts = timestamps[st.session_state[cur_idx_key]]
-            slider_pos = st.slider(
-                f"Timeline Scrubber ({current_reading_ts}):",
-                min_value=0,
-                max_value=total_len - 1,
-                value=st.session_state[cur_idx_key],
-                key=f"slider_all_{chiller_id}"
-            )
-            if slider_pos != st.session_state[cur_idx_key]:
-                st.session_state[cur_idx_key] = slider_pos
-                st.rerun()
+        selected_all_ts = st.selectbox(
+            "Select / Search Observation Event Timestamp:",
+            options=list(range(total_len)),
+            format_func=format_all_reading,
+            index=st.session_state[cur_idx_key],
+            key=all_widget_key
+        )
+        if selected_all_ts != st.session_state[cur_idx_key]:
+            st.session_state[cur_idx_key] = selected_all_ts
+            st.rerun()
 
         selected_idx = st.session_state[cur_idx_key]
 
+    # Extract target record
     row = df_chiller.iloc[selected_idx]
     current_status = str(row.get("severity", "NORMAL")).upper()
     is_abnormal = bool(row.get("is_abnormal", current_status != "NORMAL"))
@@ -1023,12 +1133,15 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     event_id = row.get("event_id", None)
     residual = actual_e - expected_e
 
-    case_badge = f'<span style="font-family: monospace; font-size: 0.76rem; color: #D4AF37; font-weight: 600;">CASE ID: {event_id}</span>' if pd.notna(event_id) else ""
+    case_badge = f'<span style="font-family: monospace; font-size: 0.76rem; color: #BFA15F; font-weight: 600;">CASE ID: {event_id}</span>' if pd.notna(event_id) else ""
 
+    # =========================================================================
+    # CLASSIFICATION BANNER: RED FOR ANOMALY, GREEN FOR NORMAL
+    # =========================================================================
     if is_abnormal or current_status in ["WATCH", "INVESTIGATE", "PRIORITY"]:
-        border_color = "#EF4444"
-        bg_color = "rgba(239, 68, 68, 0.08)"
-        tag_bg = "#EF4444"
+        border_color = "#B85450"  # Muted low-saturation brick red
+        bg_color = "rgba(184, 84, 80, 0.08)"
+        tag_bg = "#B85450"
         tag_text = f"[ANOMALOUS EVENT: {current_status}]"
         desc_text = (
             f"Power demand exceeds statistical upper bound under prevailing operating conditions. "
@@ -1037,14 +1150,14 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"Persistence sequence: <strong>{consec} consecutive reading(s)</strong> ({consec * 30} minutes)."
         )
     else:
-        border_color = "#10B981"
-        bg_color = "rgba(16, 185, 129, 0.08)"
-        tag_bg = "#10B981"
+        border_color = "#4E9A76"  # Muted low-saturation sage green
+        bg_color = "rgba(78, 154, 118, 0.08)"
+        tag_bg = "#4E9A76"
         tag_text = "[NOMINAL OPERATING STATE]"
         desc_text = (
             f"Observed energy consumption complies with calibrated thermodynamic baseline. "
             f"Residual z-score is <strong>{z_score:+.2f}σ</strong> (within normal ±2.50σ tolerance). "
-            f"Contextual deviation: <strong>{dev_pct:+.1f}%</strong>."
+            f"Contextual deviation: <strong>{dev_pct:+.1f}%</strong>. Equipment operating nominally."
         )
 
     st.markdown(
@@ -1052,33 +1165,33 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         <div style="background: {bg_color}; border: 1px solid {border_color}; border-left: 4px solid {border_color}; border-radius: 4px; padding: 16px 20px; margin-top: 14px; margin-bottom: 18px;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="background: {tag_bg}; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.78rem; padding: 3px 10px; border-radius: 2px; letter-spacing: 0.06em;">
+                    <span style="background: {tag_bg}; color: #090B0E; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.78rem; padding: 3px 10px; border-radius: 2px; letter-spacing: 0.06em;">
                         {tag_text}
                     </span>
                     {case_badge}
                 </div>
-                <div class="telemetry-mono" style="font-size: 0.88rem; font-weight: 600; color: #FAF6EE;">
+                <div class="telemetry-mono" style="font-size: 0.88rem; font-weight: 600; color: #E2E6EE;">
                     INDEX #{selected_idx + 1:,} &bull; {row['timestamp']}
                 </div>
             </div>
-            <div style="margin-top: 10px; font-size: 0.84rem; color: #EDE8DE; line-height: 1.5;">
+            <div style="margin-top: 10px; font-size: 0.84rem; color: #D8DCE4; line-height: 1.5;">
                 {desc_text}
             </div>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid {border_color}33; font-family: 'JetBrains Mono', monospace;">
                 <div>
-                    <div style="font-size: 0.68rem; color: #8E8A82;">OBSERVED DEMAND</div>
-                    <div style="font-size: 1.25rem; font-weight: 700; color: #FAF6EE;">{actual_e:.1f} <span style="font-size: 0.75rem; color: #8E8A82;">kWh</span></div>
+                    <div style="font-size: 0.68rem; color: #7A8494;">OBSERVED DEMAND</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #E2E6EE;">{actual_e:.1f} <span style="font-size: 0.75rem; color: #7A8494;">kWh</span></div>
                 </div>
                 <div>
-                    <div style="font-size: 0.68rem; color: #8E8A82;">MODEL BASELINE</div>
-                    <div style="font-size: 1.25rem; font-weight: 700; color: #D4AF37;">{expected_e:.1f} <span style="font-size: 0.75rem; color: #8E8A82;">kWh</span></div>
+                    <div style="font-size: 0.68rem; color: #7A8494;">MODEL BASELINE</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #BFA15F;">{expected_e:.1f} <span style="font-size: 0.75rem; color: #7A8494;">kWh</span></div>
                 </div>
                 <div>
-                    <div style="font-size: 0.68rem; color: #8E8A82;">EXCEEDANCE DELTA</div>
-                    <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{dev_pct:+.1f}% <span style="font-size: 0.75rem; color: #8E8A82;">({residual:+.1f} kWh)</span></div>
+                    <div style="font-size: 0.68rem; color: #7A8494;">EXCEEDANCE DELTA</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{dev_pct:+.1f}% <span style="font-size: 0.75rem; color: #7A8494;">({residual:+.1f} kWh)</span></div>
                 </div>
                 <div>
-                    <div style="font-size: 0.68rem; color: #8E8A82;">RESIDUAL Z-SCORE</div>
+                    <div style="font-size: 0.68rem; color: #7A8494;">RESIDUAL Z-SCORE</div>
                     <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{z_score:+.2f}σ</div>
                 </div>
             </div>
@@ -1109,7 +1222,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
                 x=focus_df["timestamp"],
                 y=focus_df["expected_energy"],
                 name="MODEL BASELINE",
-                line=dict(color="#D4AF37", width=1.5, dash="dash"),
+                line=dict(color="#BFA15F", width=1.5, dash="dash"),
                 hovertemplate="<b>BASELINE:</b> %{y:.1f} kWh<extra></extra>"
             )
         )
@@ -1126,6 +1239,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         )
     )
 
+    # Normal points in focus window (Sage Green)
     focus_normal = focus_df[~focus_df.index.isin(anomaly_indices)]
     if not focus_normal.empty:
         fig_focus.add_trace(
@@ -1134,11 +1248,12 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
                 y=focus_normal[energy_col],
                 mode="markers",
                 name="NOMINAL STATE",
-                marker=dict(size=6, color="#10B981"),
+                marker=dict(size=6, color="#4E9A76"),
                 hovertemplate="<b>NOMINAL</b><br>TIME: %{x}<br>DEMAND: %{y:.1f} kWh<extra></extra>"
             )
         )
 
+    # Anomalous points in focus window (Brick Red)
     focus_anom = focus_df[focus_df.index.isin(anomaly_indices)]
     if not focus_anom.empty:
         fig_focus.add_trace(
@@ -1147,7 +1262,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
                 y=focus_anom[energy_col],
                 mode="markers",
                 name="ANOMALOUS EVENT",
-                marker=dict(size=9, color="#EF4444", symbol="circle", line=dict(color="#FFFFFF", width=1)),
+                marker=dict(size=9, color="#B85450", symbol="circle", line=dict(color="#E2E6EE", width=1)),
                 hovertemplate="<b>ANOMALOUS</b><br>TIME: %{x}<br>DEMAND: %{y:.1f} kWh<extra></extra>"
             )
         )
@@ -1157,23 +1272,23 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         x=current_ts,
         line_width=1.5,
         line_dash="dot",
-        line_color="#D4AF37",
+        line_color="#BFA15F",
         annotation_text="[INSPECTION CURSOR]",
         annotation_position="top left",
-        annotation_font=dict(family="JetBrains Mono, monospace", size=10, color="#D4AF37")
+        annotation_font=dict(family="JetBrains Mono, monospace", size=10, color="#BFA15F")
     )
 
     fig_focus.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#0D111A",
-        plot_bgcolor="#080A0F",
+        paper_bgcolor="#0E1218",
+        plot_bgcolor="#090B0E",
         margin=dict(l=40, r=30, t=25, b=35),
         height=300,
-        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#8E8A82"),
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#7A8494"),
         hovermode="closest",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
-        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True),
-        yaxis=dict(title="ENERGY (kWh)", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True)
+        xaxis=dict(title="", gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True),
+        yaxis=dict(title="ENERGY (kWh)", gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True)
     )
 
     st.plotly_chart(fig_focus, use_container_width=True)
@@ -1182,7 +1297,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         """
         <div class="section-header">
             <span class="section-title">FLEET-WIDE INCIDENT CHRONOLOGY OVERVIEW</span>
-            <span class="section-sub">COMPLETE DATASET TIMELINE // RED POINTS = ANOMALIES</span>
+            <span class="section-sub">COMPLETE DATASET TIMELINE // RED = ANOMALY // GREEN = NORMAL</span>
         </div>
         """,
         unsafe_allow_html=True
@@ -1191,23 +1306,24 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     step = max(1, len(df_chiller) // 1200)
     bg_df = df_chiller.iloc[::step].copy()
 
-    # Guarantee current_ts is explicitly in bg_df so cursor line is drawn accurately
     if row["timestamp"] not in bg_df["timestamp"].values:
         bg_df = pd.concat([bg_df, df_chiller.iloc[[selected_idx]]]).sort_values("timestamp")
 
     fig_full = go.Figure()
 
+    # Normal background trace in muted sage green
     fig_full.add_trace(
         go.Scatter(
             x=bg_df["timestamp"],
             y=bg_df[energy_col],
             mode="lines",
-            name="OBSERVED PROFILE",
-            line=dict(color="#334155", width=1),
+            name="NORMAL PROFILE",
+            line=dict(color="#2D4337", width=1),
             hoverinfo="skip"
         )
     )
 
+    # Explicit anomaly markers in brick red
     if total_anomalies > 0:
         anom_full_df = df_chiller.iloc[anomaly_indices]
         fig_full.add_trace(
@@ -1216,7 +1332,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
                 y=anom_full_df[energy_col],
                 mode="markers",
                 name="ANOMALOUS INCIDENTS",
-                marker=dict(size=4, color="#EF4444"),
+                marker=dict(size=4, color="#B85450"),
                 hovertemplate="<b>INCIDENT</b><br>TIME: %{x}<br>DEMAND: %{y:.1f} kWh<extra></extra>"
             )
         )
@@ -1225,20 +1341,20 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         x=current_ts,
         line_width=1.5,
         line_dash="solid",
-        line_color="#D4AF37"
+        line_color="#BFA15F"
     )
 
     fig_full.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#0D111A",
-        plot_bgcolor="#080A0F",
+        paper_bgcolor="#0E1218",
+        plot_bgcolor="#090B0E",
         margin=dict(l=40, r=30, t=20, b=35),
         height=220,
-        font=dict(family="Plus Jakarta Sans, sans-serif", size=10, color="#8E8A82"),
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=10, color="#7A8494"),
         hovermode="closest",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
-        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True),
-        yaxis=dict(title="ENERGY (kWh)", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True)
+        xaxis=dict(title="", gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True),
+        yaxis=dict(title="ENERGY (kWh)", gridcolor="#151A24", linecolor="rgba(191, 161, 95, 0.16)", showgrid=True)
     )
 
     st.plotly_chart(fig_full, use_container_width=True)
@@ -1259,7 +1375,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">COOLING WATER TEMP</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Cooling Water Temperature (C)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">°C</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Cooling Water Temperature (C)', 0.0):.1f} <span style="font-size: 0.75rem; color: #7A8494;">°C</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1269,7 +1385,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">CHILLED WATER RATE</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">L/s</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} <span style="font-size: 0.75rem; color: #7A8494;">L/s</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1279,7 +1395,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">BUILDING LOAD</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem; color: #D4AF37;">{row.get('Building Load (RT)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">RT</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem; color: #BFA15F;">{row.get('Building Load (RT)', 0.0):.1f} <span style="font-size: 0.75rem; color: #7A8494;">RT</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1289,7 +1405,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">OUTSIDE TEMP</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Outside Temperature (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">°F</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Outside Temperature (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #7A8494;">°F</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1301,7 +1417,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">RELATIVE HUMIDITY</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Humidity (%)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">%</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Humidity (%)', 0.0):.1f} <span style="font-size: 0.75rem; color: #7A8494;">%</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1311,7 +1427,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">DEW POINT</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Dew Point (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">°F</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Dew Point (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #7A8494;">°F</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1321,7 +1437,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">WIND SPEED</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Wind Speed (mph)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">mph</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Wind Speed (mph)', 0.0):.1f} <span style="font-size: 0.75rem; color: #7A8494;">mph</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1331,7 +1447,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">ATM PRESSURE</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Pressure (in)', 0.0):.2f} <span style="font-size: 0.75rem; color: #8E8A82;">in</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Pressure (in)', 0.0):.2f} <span style="font-size: 0.75rem; color: #7A8494;">in</span></div>
             </div>
             """,
             unsafe_allow_html=True
