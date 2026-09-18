@@ -260,10 +260,6 @@ def inject_custom_css():
 
 
 def render_chiller_selector_cards(fleet_stats: List[Dict[str, Any]], active_chiller: str) -> str:
-    """
-    Render 3 interactive chiller cards side by side.
-    Clicking any chiller switches active inspection target.
-    """
     st.markdown(
         """
         <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 6px;">
@@ -866,6 +862,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
 
     energy_col = "Chiller Energy Consumption (kWh)"
     total_len = len(df_chiller)
+    timestamps = df_chiller["timestamp"].tolist()
 
     has_severity = "severity" in df_chiller.columns
     if has_severity:
@@ -876,15 +873,22 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     anomaly_indices = df_chiller.index[is_anomaly_mask].tolist()
     total_anomalies = len(anomaly_indices)
 
-    anom_key = f"anom_pos_{chiller_id}"
-    if anom_key not in st.session_state:
-        st.session_state[anom_key] = 0
+    # Master index state for this chiller
+    cur_idx_key = f"cur_obs_idx_{chiller_id}"
+    if cur_idx_key not in st.session_state:
+        st.session_state[cur_idx_key] = anomaly_indices[0] if anomaly_indices else 0
+    st.session_state[cur_idx_key] = min(max(0, st.session_state[cur_idx_key]), total_len - 1)
+
+    # Anomaly position pointer
+    anom_pos_key = f"anom_pos_{chiller_id}"
+    if anom_pos_key not in st.session_state:
+        st.session_state[anom_pos_key] = 0
     if total_anomalies > 0:
-        st.session_state[anom_key] = min(max(0, st.session_state[anom_key]), total_anomalies - 1)
+        st.session_state[anom_pos_key] = min(max(0, st.session_state[anom_pos_key]), total_anomalies - 1)
 
     mode_options = ["ALL OBSERVATIONS", "ANOMALOUS EVENTS ONLY"] if total_anomalies > 0 else ["ALL OBSERVATIONS"]
     
-    col_mode, col_ctrl = st.columns([1.5, 3.5])
+    col_mode, col_ctrl = st.columns([1.6, 3.4])
     with col_mode:
         selected_mode = st.radio(
             "Navigation Scope:",
@@ -898,26 +902,28 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         with col_ctrl:
             c_prev, c_stat, c_next = st.columns([1, 2, 1])
             with c_prev:
-                if st.button("< PREV", key=f"btn_prev_{chiller_id}", use_container_width=True):
-                    st.session_state[anom_key] = max(0, st.session_state[anom_key] - 1)
+                if st.button("< PREV INCIDENT", key=f"btn_prev_{chiller_id}", use_container_width=True):
+                    st.session_state[anom_pos_key] = max(0, st.session_state[anom_pos_key] - 1)
+                    st.session_state[cur_idx_key] = anomaly_indices[st.session_state[anom_pos_key]]
                     st.rerun()
             with c_next:
-                if st.button("NEXT >", key=f"btn_next_{chiller_id}", use_container_width=True):
-                    st.session_state[anom_key] = min(total_anomalies - 1, st.session_state[anom_key] + 1)
+                if st.button("NEXT INCIDENT >", key=f"btn_next_{chiller_id}", use_container_width=True):
+                    st.session_state[anom_pos_key] = min(total_anomalies - 1, st.session_state[anom_pos_key] + 1)
+                    st.session_state[cur_idx_key] = anomaly_indices[st.session_state[anom_pos_key]]
                     st.rerun()
             with c_stat:
                 st.markdown(
                     f"""
                     <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #D4AF37; font-weight: 700;">
-                        INCIDENT {st.session_state[anom_key] + 1} OF {total_anomalies}
+                        INCIDENT {st.session_state[anom_pos_key] + 1} OF {total_anomalies}
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
-        def format_incident(i: int) -> str:
+        def format_anomaly(i: int) -> str:
             idx = anomaly_indices[i]
-            r = df_chiller.loc[idx]
+            r = df_chiller.iloc[idx]
             ts = str(r.get("timestamp", ""))
             sev = str(r.get("severity", "ANOMALY"))
             dev = float(r.get("deviation_pct", 0.0)) if pd.notna(r.get("deviation_pct")) else 0.0
@@ -927,23 +933,84 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         selected_incident_pos = st.selectbox(
             "Jump to Anomaly Incident:",
             options=list(range(total_anomalies)),
-            format_func=format_incident,
-            index=st.session_state[anom_key],
+            format_func=format_anomaly,
+            index=st.session_state[anom_pos_key],
             key=f"anom_select_{chiller_id}"
         )
-        st.session_state[anom_key] = selected_incident_pos
-        selected_idx = anomaly_indices[selected_incident_pos]
+        if selected_incident_pos != st.session_state[anom_pos_key]:
+            st.session_state[anom_pos_key] = selected_incident_pos
+            st.session_state[cur_idx_key] = anomaly_indices[selected_incident_pos]
+            st.rerun()
+
+        selected_idx = anomaly_indices[st.session_state[anom_pos_key]]
 
     else:
-        default_val = anomaly_indices[0] if anomaly_indices else min(100, total_len - 1)
-        selected_idx = st.slider(
-            "Scrub through readings timeline:",
-            min_value=0,
-            max_value=total_len - 1,
-            value=default_val,
-            format="INDEX %d",
-            key=f"slider_{chiller_id}"
-        )
+        # ALL OBSERVATIONS MODE
+        with col_ctrl:
+            c_day_prev, c_prev, c_stat, c_next, c_day_next = st.columns([1, 1, 2.2, 1, 1])
+            with c_day_prev:
+                if st.button("<< -1D", key=f"btn_dprev_{chiller_id}", use_container_width=True, help="Jump back 24 hours (48 intervals)"):
+                    st.session_state[cur_idx_key] = max(0, st.session_state[cur_idx_key] - 48)
+                    st.rerun()
+            with c_prev:
+                if st.button("< PREV", key=f"btn_all_prev_{chiller_id}", use_container_width=True, help="Previous 30-min reading"):
+                    st.session_state[cur_idx_key] = max(0, st.session_state[cur_idx_key] - 1)
+                    st.rerun()
+            with c_next:
+                if st.button("NEXT >", key=f"btn_all_next_{chiller_id}", use_container_width=True, help="Next 30-min reading"):
+                    st.session_state[cur_idx_key] = min(total_len - 1, st.session_state[cur_idx_key] + 1)
+                    st.rerun()
+            with c_day_next:
+                if st.button("+1D >>", key=f"btn_dnext_{chiller_id}", use_container_width=True, help="Jump forward 24 hours (48 intervals)"):
+                    st.session_state[cur_idx_key] = min(total_len - 1, st.session_state[cur_idx_key] + 48)
+                    st.rerun()
+            with c_stat:
+                curr_ts_disp = timestamps[st.session_state[cur_idx_key]]
+                st.markdown(
+                    f"""
+                    <div style="text-align: center; padding-top: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; color: #D4AF37; font-weight: 700;">
+                        READING {st.session_state[cur_idx_key] + 1:,} OF {total_len:,}<br/>
+                        <span style="font-size: 0.68rem; color: #8E8A82;">{curr_ts_disp}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        def format_all_reading(i: int) -> str:
+            ts = timestamps[i]
+            r = df_chiller.iloc[i]
+            act = float(r.get(energy_col, 0.0))
+            sev = str(r.get("severity", "NORMAL"))
+            dev = float(r.get("deviation_pct", 0.0)) if pd.notna(r.get("deviation_pct")) else 0.0
+            return f"#{i+1:04d} // {ts} // {act:.1f} kWh // [{sev}] ({dev:+.1f}%)"
+
+        c_jump, c_slider = st.columns([1.8, 2.2])
+        with c_jump:
+            selected_all_ts = st.selectbox(
+                "Select / Search Observation Event Timestamp:",
+                options=list(range(total_len)),
+                format_func=format_all_reading,
+                index=st.session_state[cur_idx_key],
+                key=f"sel_all_ts_{chiller_id}"
+            )
+            if selected_all_ts != st.session_state[cur_idx_key]:
+                st.session_state[cur_idx_key] = selected_all_ts
+                st.rerun()
+
+        with c_slider:
+            current_reading_ts = timestamps[st.session_state[cur_idx_key]]
+            slider_pos = st.slider(
+                f"Timeline Scrubber ({current_reading_ts}):",
+                min_value=0,
+                max_value=total_len - 1,
+                value=st.session_state[cur_idx_key],
+                key=f"slider_all_{chiller_id}"
+            )
+            if slider_pos != st.session_state[cur_idx_key]:
+                st.session_state[cur_idx_key] = slider_pos
+                st.rerun()
+
+        selected_idx = st.session_state[cur_idx_key]
 
     row = df_chiller.iloc[selected_idx]
     current_status = str(row.get("severity", "NORMAL")).upper()
@@ -991,7 +1058,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
                     {case_badge}
                 </div>
                 <div class="telemetry-mono" style="font-size: 0.88rem; font-weight: 600; color: #FAF6EE;">
-                    INDEX #{selected_idx:,} &bull; {row['timestamp']}
+                    INDEX #{selected_idx + 1:,} &bull; {row['timestamp']}
                 </div>
             </div>
             <div style="margin-top: 10px; font-size: 0.84rem; color: #EDE8DE; line-height: 1.5;">
@@ -1047,16 +1114,27 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             )
         )
 
+    # Underlying continuous observed line
+    fig_focus.add_trace(
+        go.Scatter(
+            x=focus_df["timestamp"],
+            y=focus_df[energy_col],
+            mode="lines",
+            name="OBSERVED DEMAND",
+            line=dict(color="#475569", width=1),
+            hoverinfo="skip"
+        )
+    )
+
     focus_normal = focus_df[~focus_df.index.isin(anomaly_indices)]
     if not focus_normal.empty:
         fig_focus.add_trace(
             go.Scatter(
                 x=focus_normal["timestamp"],
                 y=focus_normal[energy_col],
-                mode="lines+markers",
+                mode="markers",
                 name="NOMINAL STATE",
-                line=dict(color="#10B981", width=1.5),
-                marker=dict(size=5, color="#10B981"),
+                marker=dict(size=6, color="#10B981"),
                 hovertemplate="<b>NOMINAL</b><br>TIME: %{x}<br>DEMAND: %{y:.1f} kWh<extra></extra>"
             )
         )
@@ -1112,6 +1190,10 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
 
     step = max(1, len(df_chiller) // 1200)
     bg_df = df_chiller.iloc[::step].copy()
+
+    # Guarantee current_ts is explicitly in bg_df so cursor line is drawn accurately
+    if row["timestamp"] not in bg_df["timestamp"].values:
+        bg_df = pd.concat([bg_df, df_chiller.iloc[[selected_idx]]]).sort_values("timestamp")
 
     fig_full = go.Figure()
 
