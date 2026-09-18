@@ -13,7 +13,7 @@ def get_status_style(status_str: str) -> Dict[str, str]:
             "tag": "[CRITICAL]",
             "label": "CRITICAL",
             "color": "#F43F5E",
-            "bg": "rgba(244, 63, 94, 0.08)",
+            "bg": "rgba(244, 63, 94, 0.10)",
             "border": "#7F1D1D"
         }
     elif st_upper in ["INVESTIGATE", "HIGH"]:
@@ -21,23 +21,23 @@ def get_status_style(status_str: str) -> Dict[str, str]:
             "tag": "[INVESTIGATE]",
             "label": "INVESTIGATE",
             "color": "#EF4444",
-            "bg": "rgba(239, 68, 68, 0.08)",
+            "bg": "rgba(239, 68, 68, 0.10)",
             "border": "#991B1B"
         }
     elif st_upper in ["WATCH", "WARNING", "MEDIUM"]:
         return {
             "tag": "[WATCH]",
             "label": "WATCH",
-            "color": "#F59E0B",
-            "bg": "rgba(245, 158, 11, 0.08)",
-            "border": "#78350F"
+            "color": "#E5B842",
+            "bg": "rgba(229, 184, 66, 0.10)",
+            "border": "#854D0E"
         }
     elif st_upper in ["NORMAL", "NOMINAL"]:
         return {
             "tag": "[NOMINAL]",
             "label": "NOMINAL",
             "color": "#10B981",
-            "bg": "rgba(16, 185, 129, 0.08)",
+            "bg": "rgba(16, 185, 129, 0.10)",
             "border": "#064E3B"
         }
     else:
@@ -45,7 +45,7 @@ def get_status_style(status_str: str) -> Dict[str, str]:
             "tag": f"[{st_upper}]",
             "label": st_upper,
             "color": "#94A3B8",
-            "bg": "rgba(148, 163, 184, 0.06)",
+            "bg": "rgba(148, 163, 184, 0.08)",
             "border": "#334155"
         }
 
@@ -54,16 +54,26 @@ def inject_custom_css():
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
         html, body, [class*="css"] {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             letter-spacing: -0.01em;
+        }
+
+        h1, h2, h3, .cinzel-font {
+            font-family: 'Cinzel', serif !important;
+            letter-spacing: 0.05em;
+        }
+
+        /* Completely remove sidebar and expand controls */
+        [data-testid="stSidebar"], section[data-testid="stSidebar"], [data-testid="collapsedControl"] {
+            display: none !important;
         }
 
         .stApp {
             background-color: #080A0F;
-            color: #E2E8F0;
+            color: #FAF6EE;
         }
 
         .telemetry-mono {
@@ -73,17 +83,17 @@ def inject_custom_css():
 
         .metric-panel {
             background: #0D111A;
-            border: 1px solid #1E2638;
-            border-radius: 2px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 4px;
             padding: 14px 16px;
             margin-bottom: 10px;
         }
 
         .metric-panel-header {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.68rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.72rem;
             font-weight: 600;
-            color: #64748B;
+            color: #8E8A82;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 6px;
@@ -93,25 +103,31 @@ def inject_custom_css():
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.65rem;
             font-weight: 700;
-            color: #F1F5F9;
+            color: #FAF6EE;
             font-feature-settings: "tnum" 1;
             line-height: 1.15;
         }
 
         .metric-panel-sub {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
-            color: #64748B;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.74rem;
+            color: #8E8A82;
             margin-top: 6px;
-            letter-spacing: 0.02em;
         }
 
         .asset-card {
             background: #0D111A;
-            border: 1px solid #1E2638;
-            border-radius: 2px;
+            border: 1px solid rgba(212, 175, 55, 0.22);
+            border-radius: 4px;
             padding: 16px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .asset-card-active {
+            background: #111726 !important;
+            border: 2px solid #D4AF37 !important;
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.22) !important;
         }
 
         .status-tag {
@@ -120,7 +136,7 @@ def inject_custom_css():
             font-size: 0.70rem;
             font-weight: 700;
             padding: 2px 8px;
-            border-radius: 2px;
+            border-radius: 3px;
             letter-spacing: 0.06em;
             text-transform: uppercase;
         }
@@ -129,102 +145,112 @@ def inject_custom_css():
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            border-bottom: 1px solid #1E2638;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
             padding-bottom: 6px;
             margin-bottom: 14px;
         }
 
         .section-title {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.88rem;
+            font-family: 'Cinzel', serif;
+            font-size: 0.96rem;
             font-weight: 700;
-            color: #F1F5F9;
+            color: #FAF6EE;
             letter-spacing: 0.06em;
         }
 
         .section-sub {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.70rem;
-            color: #64748B;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.72rem;
+            color: #8E8A82;
             letter-spacing: 0.04em;
         }
 
+        /* Streamlit Tab styling */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 4px;
-            border-bottom: 1px solid #1E2638;
+            gap: 6px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.25);
             background: transparent;
         }
 
         .stTabs [data-baseweb="tab"] {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #64748B;
-            border-radius: 2px 2px 0 0;
-            padding: 8px 16px;
+            color: #8E8A82;
+            border-radius: 4px 4px 0 0;
+            padding: 10px 20px;
             background: transparent;
             border: 1px solid transparent;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
         }
 
         .stTabs [aria-selected="true"] {
-            color: #C8A252 !important;
-            border: 1px solid #1E2638 !important;
-            border-bottom: 2px solid #C8A252 !important;
+            color: #D4AF37 !important;
+            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            border-bottom: 2px solid #D4AF37 !important;
             background: #0D111A !important;
         }
 
+        /* Button Styling */
         .stButton > button {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.74rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.78rem;
             font-weight: 600;
             background: #0D111A;
-            color: #CBD5E1;
-            border: 1px solid #1E2638;
-            border-radius: 2px;
-            padding: 6px 14px;
+            color: #FAF6EE;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 3px;
+            padding: 8px 16px;
             letter-spacing: 0.04em;
             transition: all 0.15s ease;
         }
 
         .stButton > button:hover {
-            border-color: #C8A252;
-            color: #C8A252;
-            background: #121824;
+            border-color: #D4AF37;
+            color: #D4AF37;
+            background: #141B29;
+        }
+
+        /* Primary Button (Active state) */
+        .stButton > button[kind="primary"], .stButton > button[data-testid="baseButton-primary"] {
+            background: #D4AF37 !important;
+            color: #080A0F !important;
+            border: 1px solid #D4AF37 !important;
+            font-weight: 700 !important;
         }
 
         div[data-baseweb="select"] > div {
             background-color: #0D111A !important;
-            border: 1px solid #1E2638 !important;
-            border-radius: 2px !important;
-            color: #F1F5F9 !important;
-            font-family: 'JetBrains Mono', monospace !important;
-            font-size: 0.80rem !important;
+            border: 1px solid rgba(212, 175, 55, 0.25) !important;
+            border-radius: 3px !important;
+            color: #FAF6EE !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            font-size: 0.82rem !important;
         }
 
         div[data-baseweb="input"] input {
             background-color: #0D111A !important;
-            border-radius: 2px !important;
-            color: #F1F5F9 !important;
-            font-family: 'JetBrains Mono', monospace !important;
-            font-size: 0.80rem !important;
+            border-radius: 3px !important;
+            color: #FAF6EE !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            font-size: 0.82rem !important;
         }
 
         .telemetry-row {
             display: flex;
             justify-content: space-between;
             padding: 5px 0;
-            border-bottom: 1px solid #141A26;
+            border-bottom: 1px solid #161D2B;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.76rem;
         }
 
         .telemetry-row-label {
-            color: #64748B;
+            color: #8E8A82;
         }
 
         .telemetry-row-val {
-            color: #E2E8F0;
+            color: #FAF6EE;
             font-weight: 600;
         }
         </style>
@@ -233,11 +259,101 @@ def inject_custom_css():
     )
 
 
+def render_chiller_selector_cards(fleet_stats: List[Dict[str, Any]], active_chiller: str) -> str:
+    """
+    Render 3 interactive chiller cards side by side.
+    Clicking any chiller switches active inspection target.
+    """
+    st.markdown(
+        """
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 6px;">
+            <span style="font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 700; color: #FAF6EE; letter-spacing: 0.08em;">
+                FLEET ASSET DIRECTORY
+            </span>
+            <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.74rem; color: #8E8A82;">
+                CLICK ASSET CARD TO REVEAL TELEMETRY & DIAGNOSTICS
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    stats_map = {item["equipment"]: item for item in fleet_stats}
+    chiller_ids = sorted(list(stats_map.keys()))
+    
+    selected = active_chiller
+    cols = st.columns(len(chiller_ids) if chiller_ids else 3)
+    
+    for idx, cid in enumerate(chiller_ids):
+        item = stats_map.get(cid, {})
+        is_active = (cid == active_chiller)
+        status = item.get("status", "UNASSESSED")
+        style = get_status_style(status)
+        readings = item.get("readings", 0)
+        avg_e = item.get("avg_energy", 0.0)
+        max_e = item.get("max_energy", 0.0)
+        dev = item.get("current_deviation_pct")
+
+        dev_str = f"+{dev:.1f}%" if dev is not None else "NOMINAL"
+        dev_color = style["color"] if (dev is not None and dev > 5.0) else "#10B981"
+
+        card_class = "asset-card asset-card-active" if is_active else "asset-card"
+        border_top = "border-top: 3px solid #D4AF37;" if is_active else f"border-top: 3px solid {style['color']};"
+
+        with cols[idx]:
+            indicator_html = (
+                '<div style="font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 0.70rem; font-weight: 700; color: #D4AF37; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;">● CURRENTLY ACTIVE</div>'
+                if is_active else
+                '<div style="font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 0.70rem; color: #8E8A82; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">MONITORED CHILLER</div>'
+            )
+
+            st.markdown(
+                f"""
+                <div class="{card_class}" style="{border_top} margin-bottom: 8px;">
+                    {indicator_html}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-family: 'Cinzel', serif; font-size: 1.30rem; font-weight: 700; color: {'#D4AF37' if is_active else '#FAF6EE'};">
+                            {cid}
+                        </span>
+                        <span class="status-tag" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']};">
+                            {style['tag']}
+                        </span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-row-label">READING COUNT</span>
+                        <span class="telemetry-row-val">{readings:,}</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-row-label">MEAN POWER</span>
+                        <span class="telemetry-row-val" style="color: #D4AF37;">{avg_e:.1f} kWh</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-row-label">PEAK DEMAND</span>
+                        <span class="telemetry-row-val">{max_e:.1f} kWh</span>
+                    </div>
+                    <div class="telemetry-row" style="border-bottom: none;">
+                        <span class="telemetry-row-label">EXCEEDANCE</span>
+                        <span class="telemetry-row-val" style="color: {dev_color};">{dev_str}</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            btn_label = f"✓ {cid} ACTIVE" if is_active else f"INSPECT {cid}"
+            if st.button(btn_label, key=f"btn_select_{cid}", use_container_width=True, type="primary" if is_active else "secondary"):
+                selected = cid
+                st.session_state["selected_chiller"] = cid
+                st.rerun()
+
+    return selected
+
+
 def render_fleet_metrics_summary(metrics: Dict[str, Any]):
     st.markdown(
         """
         <div class="section-header">
-            <span class="section-title">// 01 FLEET TELEMETRY & SYSTEM OVERVIEW</span>
+            <span class="section-title">FLEET TELEMETRY & SYSTEM OVERVIEW</span>
             <span class="section-sub">SOURCE: development_dataset.csv // SAMPLING: 30-MIN</span>
         </div>
         """,
@@ -250,7 +366,7 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">MONITORED ASSETS</div>
-                <div class="metric-panel-val" style="color: #C8A252;">{metrics['total_chillers']}</div>
+                <div class="metric-panel-val" style="color: #D4AF37;">{metrics['total_chillers']}</div>
                 <div class="metric-panel-sub">Active Telemetry Units</div>
             </div>
             """,
@@ -272,7 +388,7 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">OBSERVATION WINDOW</div>
-                <div class="metric-panel-val" style="font-size: 1.15rem; margin-top: 4px; color: #E2E8F0;">
+                <div class="metric-panel-val" style="font-size: 1.15rem; margin-top: 4px; color: #FAF6EE;">
                     {metrics['date_min'][:10]}
                 </div>
                 <div class="metric-panel-sub">TO {metrics['date_max'][:10]}</div>
@@ -282,7 +398,7 @@ def render_fleet_metrics_summary(metrics: Dict[str, Any]):
         )
     with c4:
         has_ml = any(c.get("has_ml", False) for c in metrics.get("chiller_stats", []))
-        status_color = "#10B981" if has_ml else "#F59E0B"
+        status_color = "#10B981" if has_ml else "#E5B842"
         status_text = "[ACTIVE: MODEL CALIBRATED]" if has_ml else "[STANDBY: PENDING ML]"
         st.markdown(
             f"""
@@ -302,7 +418,7 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
     st.markdown(
         """
         <div class="section-header">
-            <span class="section-title">// 02 ASSET STATUS DIRECTORY</span>
+            <span class="section-title">ASSET STATUS DIRECTORY</span>
             <span class="section-sub">CHILLER OPERATIONAL STATUS MATRIX</span>
         </div>
         """,
@@ -318,7 +434,7 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
     if not filtered:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
                 [INFO] No equipment matched the search query.
             </div>
             """,
@@ -344,7 +460,7 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
                 f"""
                 <div class="asset-card" style="border-left: 3px solid {style['color']};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 700; color: #FFFFFF;">
+                        <span style="font-family: 'Cinzel', serif; font-size: 1.25rem; font-weight: 700; color: #FAF6EE;">
                             {cid}
                         </span>
                         <span class="status-tag" style="color: {style['color']}; background: {style['bg']}; border: 1px solid {style['border']};">
@@ -357,7 +473,7 @@ def render_chiller_fleet_table(fleet_stats: List[Dict[str, Any]]):
                     </div>
                     <div class="telemetry-row">
                         <span class="telemetry-row-label">MEAN POWER</span>
-                        <span class="telemetry-row-val" style="color: #C8A252;">{avg_e:.1f} kWh</span>
+                        <span class="telemetry-row-val" style="color: #D4AF37;">{avg_e:.1f} kWh</span>
                     </div>
                     <div class="telemetry-row">
                         <span class="telemetry-row-label">PEAK DEMAND</span>
@@ -377,7 +493,7 @@ def render_actual_energy_chart(df_chiller: pd.DataFrame, expected_series: Option
     st.markdown(
         f"""
         <div class="section-header">
-            <span class="section-title">// 03 POWER DEMAND: OBSERVED vs EXPECTED BASELINE — {chiller_id}</span>
+            <span class="section-title">POWER DEMAND: OBSERVED vs EXPECTED BASELINE — {chiller_id}</span>
             <span class="section-sub">SAMPLING: 30-MINUTES // ENERGY UNIT: kWh</span>
         </div>
         """,
@@ -400,7 +516,7 @@ def render_actual_energy_chart(df_chiller: pd.DataFrame, expected_series: Option
             x=df_chiller["timestamp"],
             y=df_chiller[energy_col],
             name="OBSERVED DEMAND",
-            line=dict(color="#F1F5F9", width=1.5),
+            line=dict(color="#FAF6EE", width=1.5),
             hovertemplate="<b>TIMESTAMP:</b> %{x}<br><b>OBSERVED:</b> %{y:.1f} kWh<extra></extra>"
         )
     )
@@ -411,7 +527,7 @@ def render_actual_energy_chart(df_chiller: pd.DataFrame, expected_series: Option
                 x=df_chiller["timestamp"],
                 y=expected_series.reindex(df_chiller["timestamp"]).values,
                 name="MODEL BASELINE",
-                line=dict(color="#C8A252", width=1.5, dash="dash"),
+                line=dict(color="#D4AF37", width=1.5, dash="dash"),
                 hovertemplate="<b>TIMESTAMP:</b> %{x}<br><b>BASELINE:</b> %{y:.1f} kWh<extra></extra>"
             )
         )
@@ -423,17 +539,10 @@ def render_actual_energy_chart(df_chiller: pd.DataFrame, expected_series: Option
         margin=dict(l=40, r=30, t=25, b=35),
         height=380,
         hovermode="x unified",
-        font=dict(family="JetBrains Mono, monospace", size=11, color="#94A3B8"),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            font=dict(size=10)
-        ),
-        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True, zeroline=False),
-        yaxis=dict(title="POWER CONSUMPTION (kWh)", gridcolor="#141A26", linecolor="#1E2638", showgrid=True, zeroline=False)
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#8E8A82"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
+        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True, zeroline=False),
+        yaxis=dict(title="POWER CONSUMPTION (kWh)", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True, zeroline=False)
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -443,7 +552,7 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
     st.markdown(
         """
         <div class="section-header">
-            <span class="section-title">// 04 CONTEXTUAL SENSOR TELEMETRY</span>
+            <span class="section-title">CONTEXTUAL SENSOR TELEMETRY</span>
             <span class="section-sub">MULTIVARIATE THERMODYNAMIC CONTEXT EXCLUDING TARGET ENERGY</span>
         </div>
         """,
@@ -466,7 +575,7 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
                 f"""
                 <div class="metric-panel">
                     <div class="metric-panel-header">{col_name}</div>
-                    <div class="metric-panel-val" style="color: #C8A252; font-size: 1.35rem;">
+                    <div class="metric-panel-val" style="color: #D4AF37; font-size: 1.35rem;">
                         {mean_val:.1f}
                     </div>
                     <div class="metric-panel-sub">
@@ -479,7 +588,7 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
 
     st.markdown(
         """
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #64748B; margin-top: 10px; margin-bottom: 4px;">
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.74rem; font-weight: 600; color: #8E8A82; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase;">
             INTERACTIVE CONTEXT PARAMETER TRACE
         </div>
         """,
@@ -499,7 +608,7 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
             x=df_chiller["timestamp"],
             y=df_chiller[selected_var],
             name=selected_var.upper(),
-            line=dict(color="#C8A252", width=1.5),
+            line=dict(color="#D4AF37", width=1.5),
             hovertemplate=f"<b>TIMESTAMP:</b> %{{x}}<br><b>{selected_var}:</b> %{{y:.2f}}<extra></extra>"
         )
     )
@@ -510,9 +619,9 @@ def render_contextual_operating_conditions(df_chiller: pd.DataFrame):
         plot_bgcolor="#080A0F",
         margin=dict(l=40, r=30, t=20, b=35),
         height=280,
-        font=dict(family="JetBrains Mono, monospace", size=11, color="#94A3B8"),
-        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True),
-        yaxis=dict(title=selected_var.upper(), gridcolor="#141A26", linecolor="#1E2638", showgrid=True)
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#8E8A82"),
+        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True),
+        yaxis=dict(title=selected_var.upper(), gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True)
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -522,7 +631,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
     st.markdown(
         """
         <div class="section-header">
-            <span class="section-title">// 05.1 EMPIRICAL DEVIATION ANALYSIS</span>
+            <span class="section-title">EMPIRICAL DEVIATION ANALYSIS</span>
             <span class="section-sub">ACTUAL vs PREDICTED ENERGY RESIDUAL</span>
         </div>
         """,
@@ -532,7 +641,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
     if not anomaly_data or "expected_energy" not in anomaly_data:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
                 [INFO] Baseline model output pending ML pipeline calibration.
             </div>
             """,
@@ -551,7 +660,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">ACTUAL DEMAND (OBSERVED)</div>
-                <div class="metric-panel-val">{actual:.1f} <span style="font-size: 0.9rem; color: #64748B;">kWh</span></div>
+                <div class="metric-panel-val">{actual:.1f} <span style="font-size: 0.9rem; color: #8E8A82;">kWh</span></div>
                 <div class="metric-panel-sub">PREVAILING READING</div>
             </div>
             """,
@@ -562,7 +671,7 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">MODEL BASELINE (EXPECTED)</div>
-                <div class="metric-panel-val" style="color: #C8A252;">{expected:.1f} <span style="font-size: 0.9rem; color: #64748B;">kWh</span></div>
+                <div class="metric-panel-val" style="color: #D4AF37;">{expected:.1f} <span style="font-size: 0.9rem; color: #8E8A82;">kWh</span></div>
                 <div class="metric-panel-sub">EMPIRICAL TARGET</div>
             </div>
             """,
@@ -582,10 +691,10 @@ def render_contextual_deviation_section(anomaly_data: Optional[Dict[str, Any]]):
 
     st.markdown(
         f"""
-        <div style="background: #0D111A; border: 1px solid #1E2638; border-left: 3px solid #C8A252; padding: 12px 16px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.80rem; color: #E2E8F0; line-height: 1.6;">
-            <div>[DIAGNOSTIC TELEMETRY LOG]</div>
-            <div style="color: #94A3B8; margin-top: 4px;">
-                Observed energy demand is <strong style="color: #C8A252;">+{dev_pct:.1f}% higher than expected</strong> for the measured thermodynamic operating conditions (ambient wet-bulb, water flow rates, and building RT load).
+        <div style="background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.25); border-left: 3px solid #D4AF37; padding: 12px 16px; margin-top: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.84rem; color: #FAF6EE; line-height: 1.6;">
+            <div style="font-family: 'Cinzel', serif; font-weight: 700; color: #D4AF37; margin-bottom: 4px;">DIAGNOSTIC TELEMETRY LOG</div>
+            <div style="color: #EDE8DE;">
+                Observed energy demand is <strong style="color: #D4AF37;">+{dev_pct:.1f}% higher than expected</strong> for the measured thermodynamic operating conditions (ambient wet-bulb, water flow rates, and building RT load).
             </div>
         </div>
         """,
@@ -597,7 +706,7 @@ def render_persistence_analysis(anomaly_data: Optional[Dict[str, Any]]):
     st.markdown(
         """
         <div class="section-header">
-            <span class="section-title">// 05.2 SEQUENCE PERSISTENCE & SEVERITY</span>
+            <span class="section-title">SEQUENCE PERSISTENCE & SEVERITY</span>
             <span class="section-sub">TEMPORAL CONTINUITY FILTERING (WINDOW >= 3 PERIODS)</span>
         </div>
         """,
@@ -607,7 +716,7 @@ def render_persistence_analysis(anomaly_data: Optional[Dict[str, Any]]):
     if not anomaly_data:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
                 [INFO] Persistence evaluation pending ML anomaly results.
             </div>
             """,
@@ -633,18 +742,18 @@ def render_persistence_analysis(anomaly_data: Optional[Dict[str, Any]]):
                 </div>
                 <div>
                     <div class="metric-panel-header">PERSISTENT SEQUENCE</div>
-                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #F1F5F9; margin-top: 2px;">
-                        {consec} <span style="font-size: 0.80rem; color: #64748B;">READINGS ({duration_min} MIN)</span>
+                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #FAF6EE; margin-top: 2px;">
+                        {consec} <span style="font-size: 0.80rem; color: #8E8A82;">READINGS ({duration_min} MIN)</span>
                     </div>
                 </div>
                 <div>
                     <div class="metric-panel-header">DEVIATION TRAJECTORY</div>
-                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #C8A252; margin-top: 2px;">
+                    <div class="telemetry-mono" style="font-size: 1.25rem; font-weight: 700; color: #D4AF37; margin-top: 2px;">
                         {trend}
                     </div>
                 </div>
             </div>
-            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #1E2638; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #64748B;">
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(212, 175, 55, 0.15); font-size: 0.74rem; color: #8E8A82;">
                 FILTER CRITERIA: Transient single-period spikes filtered. Persistent state confirmed after >=3 consecutive periods beyond 2.5 sigma threshold.
             </div>
         </div>
@@ -657,7 +766,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     st.markdown(
         """
         <div class="section-header">
-            <span class="section-title">// 05.3 AUTOMATED ROOT-CAUSE ATTRIBUTION & ACTIONS</span>
+            <span class="section-title">AUTOMATED ROOT-CAUSE ATTRIBUTION & ACTIONS</span>
             <span class="section-sub">DECISION SUPPORT & CORRECTIVE ACTION PROCEDURES</span>
         </div>
         """,
@@ -667,7 +776,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     if not anomaly_data:
         st.markdown(
             """
-            <div style="padding: 16px; background: #0D111A; border: 1px solid #1E2638; font-family: monospace; font-size: 0.80rem; color: #64748B;">
+            <div style="padding: 16px; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.2); font-size: 0.80rem; color: #8E8A82;">
                 [INFO] Investigation report will display once ML anomaly evaluation is generated.
             </div>
             """,
@@ -682,10 +791,10 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     st.markdown(
         f"""
         <div class="asset-card">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #C8A252; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+            <div style="font-family: 'Cinzel', serif; font-size: 0.88rem; color: #D4AF37; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
                 ATTRIBUTION SUMMARY
             </div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #E2E8F0; line-height: 1.6; margin-bottom: 14px;">
+            <div style="font-size: 0.88rem; color: #EDE8DE; line-height: 1.6; margin-bottom: 14px;">
                 {summary}
             </div>
         """,
@@ -695,7 +804,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     if context_changes:
         st.markdown(
             """
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.70rem; color: #64748B; text-transform: uppercase; margin-bottom: 8px;">
+            <div style="font-size: 0.72rem; font-weight: 600; color: #8E8A82; text-transform: uppercase; margin-bottom: 8px;">
                 OBSERVED CONTEXTUAL PARAMETER DRIFT
             </div>
             """,
@@ -709,7 +818,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
                 f"""
                 <div class="telemetry-row" style="padding: 4px 0;">
                     <span class="telemetry-row-label">{var_name}</span>
-                    <span class="telemetry-row-val" style="color: {'#EF4444' if abs(pct) > 10 else '#C8A252'};">
+                    <span class="telemetry-row-val" style="color: {'#EF4444' if abs(pct) > 10 else '#D4AF37'};">
                         {direction} ({pct:+.1f}%)
                     </span>
                 </div>
@@ -719,7 +828,7 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
 
     st.markdown(
         """
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.70rem; color: #64748B; text-transform: uppercase; margin-top: 14px; margin-bottom: 8px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 700; color: #FAF6EE; text-transform: uppercase; margin-top: 14px; margin-bottom: 8px;">
             RECOMMENDED ENGINEERING ACTIONS
         </div>
         """,
@@ -729,8 +838,8 @@ def render_investigation_report(anomaly_data: Optional[Dict[str, Any]]):
     for idx, rec in enumerate(recommendations, 1):
         st.markdown(
             f"""
-            <div style="background: #080A0F; border: 1px solid #1E2638; border-left: 2px solid #C8A252; padding: 10px 14px; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #E2E8F0; display: flex; gap: 10px;">
-                <span style="color: #C8A252; font-weight: 700;">[ACTION {idx:02d}]</span>
+            <div style="background: #080A0F; border: 1px solid rgba(212, 175, 55, 0.2); border-left: 3px solid #D4AF37; padding: 10px 14px; margin-bottom: 8px; font-size: 0.82rem; color: #EDE8DE; display: flex; gap: 10px;">
+                <span style="color: #D4AF37; font-weight: 700;">[ACTION {idx:02d}]</span>
                 <span>{rec}</span>
             </div>
             """,
@@ -744,7 +853,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     st.markdown(
         f"""
         <div class="section-header">
-            <span class="section-title">// 06 CHRONOLOGICAL REPLAY & INCIDENT CLASSIFIER — {chiller_id}</span>
+            <span class="section-title">CHRONOLOGICAL REPLAY & INCIDENT CLASSIFIER — {chiller_id}</span>
             <span class="section-sub">SAMPLING: 30-MINUTES // RESIDUAL EVALUATION ENGINE</span>
         </div>
         """,
@@ -799,7 +908,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             with c_stat:
                 st.markdown(
                     f"""
-                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: #C8A252; font-weight: 700;">
+                    <div style="text-align: center; padding-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #D4AF37; font-weight: 700;">
                         INCIDENT {st.session_state[anom_key] + 1} OF {total_anomalies}
                     </div>
                     """,
@@ -847,11 +956,11 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
     event_id = row.get("event_id", None)
     residual = actual_e - expected_e
 
-    case_badge = f'<span style="font-family: monospace; font-size: 0.76rem; color: #C8A252; font-weight: 600;">CASE ID: {event_id}</span>' if pd.notna(event_id) else ""
+    case_badge = f'<span style="font-family: monospace; font-size: 0.76rem; color: #D4AF37; font-weight: 600;">CASE ID: {event_id}</span>' if pd.notna(event_id) else ""
 
     if is_abnormal or current_status in ["WATCH", "INVESTIGATE", "PRIORITY"]:
         border_color = "#EF4444"
-        bg_color = "rgba(239, 68, 68, 0.06)"
+        bg_color = "rgba(239, 68, 68, 0.08)"
         tag_bg = "#EF4444"
         tag_text = f"[ANOMALOUS EVENT: {current_status}]"
         desc_text = (
@@ -862,7 +971,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         )
     else:
         border_color = "#10B981"
-        bg_color = "rgba(16, 185, 129, 0.06)"
+        bg_color = "rgba(16, 185, 129, 0.08)"
         tag_bg = "#10B981"
         tag_text = "[NOMINAL OPERATING STATE]"
         desc_text = (
@@ -873,7 +982,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
 
     st.markdown(
         f"""
-        <div style="background: {bg_color}; border: 1px solid {border_color}; border-left: 4px solid {border_color}; border-radius: 2px; padding: 16px 20px; margin-top: 14px; margin-bottom: 18px;">
+        <div style="background: {bg_color}; border: 1px solid {border_color}; border-left: 4px solid {border_color}; border-radius: 4px; padding: 16px 20px; margin-top: 14px; margin-bottom: 18px;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span style="background: {tag_bg}; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.78rem; padding: 3px 10px; border-radius: 2px; letter-spacing: 0.06em;">
@@ -881,28 +990,28 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
                     </span>
                     {case_badge}
                 </div>
-                <div class="telemetry-mono" style="font-size: 0.88rem; font-weight: 600; color: #F1F5F9;">
+                <div class="telemetry-mono" style="font-size: 0.88rem; font-weight: 600; color: #FAF6EE;">
                     INDEX #{selected_idx:,} &bull; {row['timestamp']}
                 </div>
             </div>
-            <div style="margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.80rem; color: #CBD5E1; line-height: 1.5;">
+            <div style="margin-top: 10px; font-size: 0.84rem; color: #EDE8DE; line-height: 1.5;">
                 {desc_text}
             </div>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid {border_color}33; font-family: 'JetBrains Mono', monospace;">
                 <div>
-                    <div style="font-size: 0.68rem; color: #64748B;">OBSERVED DEMAND</div>
-                    <div style="font-size: 1.25rem; font-weight: 700; color: #F1F5F9;">{actual_e:.1f} <span style="font-size: 0.75rem; color: #64748B;">kWh</span></div>
+                    <div style="font-size: 0.68rem; color: #8E8A82;">OBSERVED DEMAND</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #FAF6EE;">{actual_e:.1f} <span style="font-size: 0.75rem; color: #8E8A82;">kWh</span></div>
                 </div>
                 <div>
-                    <div style="font-size: 0.68rem; color: #64748B;">MODEL BASELINE</div>
-                    <div style="font-size: 1.25rem; font-weight: 700; color: #C8A252;">{expected_e:.1f} <span style="font-size: 0.75rem; color: #64748B;">kWh</span></div>
+                    <div style="font-size: 0.68rem; color: #8E8A82;">MODEL BASELINE</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #D4AF37;">{expected_e:.1f} <span style="font-size: 0.75rem; color: #8E8A82;">kWh</span></div>
                 </div>
                 <div>
-                    <div style="font-size: 0.68rem; color: #64748B;">EXCEEDANCE DELTA</div>
-                    <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{dev_pct:+.1f}% <span style="font-size: 0.75rem; color: #64748B;">({residual:+.1f} kWh)</span></div>
+                    <div style="font-size: 0.68rem; color: #8E8A82;">EXCEEDANCE DELTA</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{dev_pct:+.1f}% <span style="font-size: 0.75rem; color: #8E8A82;">({residual:+.1f} kWh)</span></div>
                 </div>
                 <div>
-                    <div style="font-size: 0.68rem; color: #64748B;">RESIDUAL Z-SCORE</div>
+                    <div style="font-size: 0.68rem; color: #8E8A82;">RESIDUAL Z-SCORE</div>
                     <div style="font-size: 1.25rem; font-weight: 700; color: {border_color};">{z_score:+.2f}σ</div>
                 </div>
             </div>
@@ -933,7 +1042,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
                 x=focus_df["timestamp"],
                 y=focus_df["expected_energy"],
                 name="MODEL BASELINE",
-                line=dict(color="#C8A252", width=1.5, dash="dash"),
+                line=dict(color="#D4AF37", width=1.5, dash="dash"),
                 hovertemplate="<b>BASELINE:</b> %{y:.1f} kWh<extra></extra>"
             )
         )
@@ -970,10 +1079,10 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         x=current_ts,
         line_width=1.5,
         line_dash="dot",
-        line_color="#C8A252",
+        line_color="#D4AF37",
         annotation_text="[INSPECTION CURSOR]",
         annotation_position="top left",
-        annotation_font=dict(family="JetBrains Mono, monospace", size=10, color="#C8A252")
+        annotation_font=dict(family="JetBrains Mono, monospace", size=10, color="#D4AF37")
     )
 
     fig_focus.update_layout(
@@ -982,11 +1091,11 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         plot_bgcolor="#080A0F",
         margin=dict(l=40, r=30, t=25, b=35),
         height=300,
-        font=dict(family="JetBrains Mono, monospace", size=11, color="#94A3B8"),
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="#8E8A82"),
         hovermode="closest",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
-        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True),
-        yaxis=dict(title="ENERGY (kWh)", gridcolor="#141A26", linecolor="#1E2638", showgrid=True)
+        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True),
+        yaxis=dict(title="ENERGY (kWh)", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True)
     )
 
     st.plotly_chart(fig_focus, use_container_width=True)
@@ -1034,7 +1143,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         x=current_ts,
         line_width=1.5,
         line_dash="solid",
-        line_color="#C8A252"
+        line_color="#D4AF37"
     )
 
     fig_full.update_layout(
@@ -1043,11 +1152,11 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
         plot_bgcolor="#080A0F",
         margin=dict(l=40, r=30, t=20, b=35),
         height=220,
-        font=dict(family="JetBrains Mono, monospace", size=10, color="#94A3B8"),
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=10, color="#8E8A82"),
         hovermode="closest",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
-        xaxis=dict(title="", gridcolor="#141A26", linecolor="#1E2638", showgrid=True),
-        yaxis=dict(title="ENERGY (kWh)", gridcolor="#141A26", linecolor="#1E2638", showgrid=True)
+        xaxis=dict(title="", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True),
+        yaxis=dict(title="ENERGY (kWh)", gridcolor="#161D2B", linecolor="rgba(212, 175, 55, 0.2)", showgrid=True)
     )
 
     st.plotly_chart(fig_full, use_container_width=True)
@@ -1068,7 +1177,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">COOLING WATER TEMP</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Cooling Water Temperature (C)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">°C</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Cooling Water Temperature (C)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">°C</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1078,7 +1187,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">CHILLED WATER RATE</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">L/s</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Chilled Water Rate (L/sec)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">L/s</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1088,7 +1197,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">BUILDING LOAD</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem; color: #C8A252;">{row.get('Building Load (RT)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">RT</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem; color: #D4AF37;">{row.get('Building Load (RT)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">RT</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1098,7 +1207,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">OUTSIDE TEMP</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Outside Temperature (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">°F</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Outside Temperature (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">°F</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1110,7 +1219,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">RELATIVE HUMIDITY</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Humidity (%)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">%</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Humidity (%)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">%</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1120,7 +1229,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">DEW POINT</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Dew Point (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">°F</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Dew Point (F)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">°F</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1130,7 +1239,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">WIND SPEED</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Wind Speed (mph)', 0.0):.1f} <span style="font-size: 0.75rem; color: #64748B;">mph</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Wind Speed (mph)', 0.0):.1f} <span style="font-size: 0.75rem; color: #8E8A82;">mph</span></div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1140,7 +1249,7 @@ def render_anomaly_replay_view(df_chiller: pd.DataFrame, chiller_id: str):
             f"""
             <div class="metric-panel">
                 <div class="metric-panel-header">ATM PRESSURE</div>
-                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Pressure (in)', 0.0):.2f} <span style="font-size: 0.75rem; color: #64748B;">in</span></div>
+                <div class="metric-panel-val" style="font-size: 1.25rem;">{row.get('Pressure (in)', 0.0):.2f} <span style="font-size: 0.75rem; color: #8E8A82;">in</span></div>
             </div>
             """,
             unsafe_allow_html=True

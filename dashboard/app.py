@@ -15,6 +15,7 @@ from dashboard.data_loader import (
 )
 from dashboard.components import (
     inject_custom_css,
+    render_chiller_selector_cards,
     render_fleet_metrics_summary,
     render_chiller_fleet_table,
     render_actual_energy_chart,
@@ -25,97 +26,83 @@ from dashboard.components import (
     render_anomaly_replay_view
 )
 
-# Page Setup
+# Page Setup (No sidebar needed)
 st.set_page_config(
-    page_title="Chiller Forensics // Telemetry Operations",
+    page_title="CHILLER FORENSICS // Telemetry Operations",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Custom CSS
 inject_custom_css()
 
-# Industrial Operations Header
+# Load Data
+fleet_metrics = get_fleet_metrics()
+chiller_ids = get_available_chiller_ids()
+total_records = fleet_metrics.get("total_readings", len(chiller_ids))
+
+# State Management for Selected Chiller
+default_chiller = "CHILLER-01" if "CHILLER-01" in chiller_ids else (chiller_ids[0] if chiller_ids else "CHILLER-01")
+if "selected_chiller" not in st.session_state:
+    st.session_state["selected_chiller"] = default_chiller
+
+if st.session_state["selected_chiller"] not in chiller_ids and chiller_ids:
+    st.session_state["selected_chiller"] = chiller_ids[0]
+
+# Centered Title Header
 st.markdown(
-    """
-    <div style="border-bottom: 1px solid #1E2330; padding-bottom: 10px; margin-bottom: 18px;">
-        <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; align-items: baseline; gap: 12px;">
-                <span style="font-size: 1.35rem; font-weight: 800; color: #FFFFFF; letter-spacing: 0.05em; font-family: monospace;">CHILLER FORENSICS</span>
-                <span style="font-size: 0.80rem; font-weight: 600; color: #C8A252; letter-spacing: 0.08em; text-transform: uppercase;">Operations Terminal</span>
-            </div>
-            <div style="font-family: monospace; font-size: 0.76rem; color: #626B7E;">
-                SPEC: YUKTHI-2026 // MODEL: RANDOM FOREST ENSEMBLE // RUNTIME: ACTIVE
-            </div>
+    f"""
+    <div style="text-align: center; padding: 22px 0 16px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.25); margin-bottom: 22px;">
+        <h1 style="font-family: 'Cinzel', serif; font-size: 2.75rem; font-weight: 700; color: #FAF6EE; letter-spacing: 0.12em; margin: 0;">
+            CHILLER FORENSICS
+        </h1>
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 600; color: #D4AF37; letter-spacing: 0.16em; text-transform: uppercase; margin-top: 8px;">
+            Thermodynamic Forensics & Anomaly Diagnostic Terminal
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; color: #8E8A82; letter-spacing: 0.06em; margin-top: 6px;">
+            SPEC: YUKTHI-2026 // SOURCE: development_dataset.csv ({total_records:,} OBSERVATIONS) // INTERVAL: 30 MINUTES // ML: ACTIVE
         </div>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-# Sidebar Navigation
-chiller_ids = get_available_chiller_ids()
-default_chiller = "CHILLER-01" if "CHILLER-01" in chiller_ids else (chiller_ids[0] if chiller_ids else "CHILLER-01")
+# Top 3 Clickable Chiller Selector Cards
+selected_chiller = render_chiller_selector_cards(fleet_metrics["chiller_stats"], st.session_state["selected_chiller"])
 
-st.sidebar.markdown(
-    """
-    <div style="font-size: 0.70rem; font-weight: 700; color: #7C8394; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">
-        Equipment Directory
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-selected_chiller = st.sidebar.selectbox(
-    "Select Chiller Asset:",
-    options=chiller_ids,
-    index=chiller_ids.index(default_chiller) if default_chiller in chiller_ids else 0,
-    label_visibility="collapsed"
-)
-
-fleet_metrics = get_fleet_metrics()
-total_records = fleet_metrics.get("total_readings", len(chiller_ids))
-
-st.sidebar.markdown(
-    f"""
-    <div style="border-top: 1px solid #1E2330; margin-top: 20px; padding-top: 14px; font-family: monospace; font-size: 0.74rem; color: #626B7E; line-height: 1.8;">
-        <div>DATASET: <span style="color: #C8A252;">development_dataset.csv</span></div>
-        <div>OBSERVATIONS: <span style="color: #ECECEE;">{total_records:,}</span></div>
-        <div>INTERVAL: <span style="color: #ECECEE;">30 MINUTES</span></div>
-        <div>CALIBRATION: <span style="color: #ECECEE;">OUT-OF-BAG RESIDUALS</span></div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# Load data for selected equipment
+# Load data for the active selected chiller
 df_chiller = get_chiller_readings(selected_chiller)
 expected_energy_series = get_expected_energy(selected_chiller)
 anomaly_data = get_anomaly_data(selected_chiller)
 
-# Main Tabs Navigation
-tab_fleet, tab_investigation, tab_replay = st.tabs([
-    "FLEET TELEMETRY",
-    f"DIAGNOSTICS [{selected_chiller}]",
-    f"CHRONOLOGICAL REPLAY [{selected_chiller}]"
+# Active Target Banner
+st.markdown(
+    f"""
+    <div style="display: flex; justify-content: space-between; align-items: baseline; background: #0D111A; border: 1px solid rgba(212, 175, 55, 0.25); border-left: 3px solid #D4AF37; padding: 10px 16px; margin: 16px 0 18px 0; border-radius: 3px;">
+        <div>
+            <span style="font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700; color: #D4AF37;">
+                INSPECTION TARGET: {selected_chiller}
+            </span>
+            <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.80rem; color: #8E8A82; margin-left: 12px;">
+                {len(df_chiller):,} Readings Loaded
+            </span>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; color: #8E8A82;">
+            CALIBRATION: OUT-OF-BAG RESIDUALS // YUKTHI-2026 COMPLIANT
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Main Navigation Tabs for the selected chiller
+tab_diag, tab_replay, tab_fleet = st.tabs([
+    f"EQUIPMENT DIAGNOSTICS [{selected_chiller}]",
+    f"CHRONOLOGICAL REPLAY [{selected_chiller}]",
+    "FLEET OVERVIEW"
 ])
 
-with tab_fleet:
-    render_fleet_metrics_summary(fleet_metrics)
-    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
-    render_chiller_fleet_table(fleet_metrics["chiller_stats"])
-
-with tab_investigation:
-    st.markdown(
-        f"""
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
-            <div style="font-size: 1.05rem; font-weight: 700; color: #FFFFFF; font-family: monospace;">EQUIPMENT DIAGNOSTICS: {selected_chiller}</div>
-            <div style="font-size: 0.78rem; color: #7C8394; font-family: monospace;">SOURCE: development_dataset.csv</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
+with tab_diag:
     # 1. Actual Energy Over Time Line Chart
     render_actual_energy_chart(df_chiller, expected_series=expected_energy_series, chiller_id=selected_chiller)
     st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
@@ -139,14 +126,18 @@ with tab_investigation:
 with tab_replay:
     render_anomaly_replay_view(df_chiller, chiller_id=selected_chiller)
 
+with tab_fleet:
+    render_fleet_metrics_summary(fleet_metrics)
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+    render_chiller_fleet_table(fleet_metrics["chiller_stats"])
+
 # Footer
 st.markdown(
     """
-    <div style='margin-top: 36px; padding-top: 14px; border-top: 1px solid #1E2330; display: flex; justify-content: space-between; font-family: monospace; font-size: 0.72rem; color: #505767;'>
+    <div style='margin-top: 36px; padding-top: 14px; border-top: 1px solid rgba(212, 175, 55, 0.2); display: flex; justify-content: space-between; font-family: monospace; font-size: 0.72rem; color: #505767;'>
         <span>CHILLER FORENSICS // YUKTHI 2026 SPECIFICATION COMPLIANT</span>
         <span>STATUS: OPERATIONAL // TELEMETRY REPLAY SYNCHRONIZED</span>
     </div>
     """,
     unsafe_allow_html=True
 )
-
