@@ -37,8 +37,18 @@ st.set_page_config(
 inject_custom_css()
 
 # Title Header
-st.title("❄️ CHILLER FORENSICS")
-st.markdown("##### *Contextual equipment monitoring — from anomaly detection to investigation*")
+st.markdown(
+    """
+    <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 2px;">
+        <h1 style="margin: 0; color: #FAF6EE; font-family: 'Cinzel', serif; font-size: 2.2rem; letter-spacing: 0.06em;">CHILLER FORENSICS</h1>
+        <span style="color: #D4AF37; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Thermodynamic Monitoring & Forensic Forensics</span>
+    </div>
+    <div style="color: #8E8A82; font-size: 0.90rem; margin-bottom: 20px;">
+        Industrial contextual energy analytics &bull; Empirical baseline calibration &bull; Persistence tracking
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.write("")
 
 # Sidebar Navigation
@@ -107,8 +117,8 @@ with tab_replay:
 # Footer
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: #64748B; font-size: 0.82rem;'>"
-    "Chiller Forensics v1.0 — Powered by real dataset & Person 1/2 ML integration adapters"
+    "<div style='text-align: center; color: #8E8A82; font-size: 0.80rem; letter-spacing: 0.05em;'>"
+    "CHILLER FORENSICS &bull; INDUSTRIAL EQUIPMENT MONITORING &bull; YUKTHI 2026 COMPLIANT"
     "</div>",
     unsafe_allow_html=True
 )
